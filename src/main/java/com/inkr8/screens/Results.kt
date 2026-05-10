@@ -41,10 +41,11 @@ private val previewSubmission = Submissions(
         isExpanded = false,
         feedbackUnlocked = false,
         resultStatus = SubmissionStatus.EVALUATED,
-        meritEarned = 57
+        meritEarned = 57,
+        ratingChange = 5
     ),
     status = SubmissionStatus.EVALUATED,
-    playmode = "PRACTICE"
+    playmode = "RANKED"
 )
 
 @Composable
@@ -52,6 +53,7 @@ fun Results(
     submission: Submissions,
     isUnlockingFeedback: Boolean,
     isPhilosopher: Boolean,
+    isPlaced: Boolean,
     onUnlockFeedback: () -> Unit,
     onNavigateBack: () -> Unit,
     onNavigateToPractice: () -> Unit,
@@ -242,6 +244,30 @@ fun Results(
                 }
                 
                 Box(modifier = Modifier.width(1.dp).height(32.dp).background(Color.White.copy(alpha = 0.05f)))
+
+                if (submission.playmode == "RANKED") {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("Rating", color = Color.Gray, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                        if (isPlaced) {
+                            val sign = if (evaluation.ratingChange >= 0) "+" else ""
+                            Text(
+                                text = "$sign${evaluation.ratingChange}",
+                                color = if (evaluation.ratingChange >= 0) Color(0xFF4CAF50) else Color(0xFFF44336),
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.Black
+                            )
+                        } else {
+                            Text(
+                                text = "Calibrating",
+                                color = Color.White,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Black,
+                                letterSpacing = 1.sp
+                            )
+                        }
+                    }
+                    Box(modifier = Modifier.width(1.dp).height(32.dp).background(Color.White.copy(alpha = 0.05f)))
+                }
                 
                 Column(horizontalAlignment = Alignment.End) {
                     Text("Lexicon", color = Color.Gray, fontSize = 9.sp, fontWeight = FontWeight.Bold)
@@ -292,6 +318,7 @@ fun ResultsPreview() {
         Results(
             submission = previewSubmission,
             isUnlockingFeedback = false,
+            isPlaced = false,
             onUnlockFeedback = {},
             onNavigateBack = {},
             onNavigateToPractice = {},

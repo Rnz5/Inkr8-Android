@@ -1,7 +1,6 @@
 package com.inkr8.utils
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -33,6 +32,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.inkr8.R
 import com.inkr8.data.Tournament
 import com.inkr8.data.TournamentStatus
@@ -158,11 +158,13 @@ fun TournamentCard(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.clip(RoundedCornerShape(12.dp)).clickable { onHostClick() }.padding(vertical = 4.dp, horizontal = 0.dp)
                 ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.pfpexample),
+                    AsyncImage(
+                        model = tournament.creatorImageURL.ifEmpty { R.drawable.pfpexample },
                         contentDescription = null,
                         modifier = Modifier.size(32.dp).clip(CircleShape).border(1.dp, Color.White.copy(alpha = 0.1f), CircleShape),
-                        contentScale = ContentScale.Crop
+                        contentScale = ContentScale.Crop,
+                        error = painterResource(id = R.drawable.pfpexample),
+                        placeholder = painterResource(id = R.drawable.pfpexample)
                     )
 
                     Spacer(modifier = Modifier.width(10.dp))

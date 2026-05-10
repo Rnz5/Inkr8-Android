@@ -12,6 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -162,19 +163,35 @@ fun Competitions(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Column {
-                                    Text(
-                                        text = league.displayName.uppercase(),
-                                        color = primaryGold,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        fontSize = 12.sp,
-                                        letterSpacing = 1.sp
-                                    )
-                                    Text(
-                                        text = "Rating: ${user.rating}",
-                                        color = Color.Gray,
-                                        fontSize = 10.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
+                                    if (user.isPlaced) {
+                                        Text(
+                                            text = league.displayName.uppercase(),
+                                            color = primaryGold,
+                                            fontWeight = FontWeight.ExtraBold,
+                                            fontSize = 12.sp,
+                                            letterSpacing = 1.sp
+                                        )
+                                        Text(
+                                            text = "Rating: ${user.rating}",
+                                            color = Color.Gray,
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    } else {
+                                        Text(
+                                            text = "Rank Calibration",
+                                            color = Color.Gray,
+                                            fontWeight = FontWeight.ExtraBold,
+                                            fontSize = 12.sp,
+                                            letterSpacing = 1.sp
+                                        )
+                                        Text(
+                                            text = "Phase: ${user.placementMatchesPlayed}/6",
+                                            color = primaryGold,
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
                                 }
 
                                 Button(
@@ -185,6 +202,16 @@ fun Competitions(
                                 ) {
                                     Text("Enter • $entryCost", fontWeight = FontWeight.Black, fontSize = 12.sp)
                                 }
+                            }
+
+                            if (!user.isPlaced) {
+                                Spacer(modifier = Modifier.height(12.dp))
+                                LinearProgressIndicator(
+                                    progress = { user.placementMatchesPlayed.toFloat() / 6f },
+                                    modifier = Modifier.fillMaxWidth().height(2.dp).clip(CircleShape),
+                                    color = primaryGold.copy(alpha = 0.5f),
+                                    trackColor = Color.White.copy(alpha = 0.05f)
+                                )
                             }
                         }
                     }

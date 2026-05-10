@@ -1,7 +1,6 @@
 package com.inkr8.screens
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -26,11 +25,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.inkr8.R
 import com.inkr8.data.Users
 import com.inkr8.economy.EconomyConfig
 import com.inkr8.rating.League
-import com.inkr8.repository.FirestoreSubmissionRepository
 import com.inkr8.ui.theme.Inkr8Theme
 import com.inkr8.utils.TimeUtils.formatTime
 import java.text.NumberFormat
@@ -150,11 +149,13 @@ fun Profile(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Box(modifier = Modifier.offset(y = (-50).dp)) {
-                Image(
-                    painter = painterResource(id = R.drawable.pfpexample),
+                AsyncImage(
+                    model = user.profileImageURL.ifEmpty { R.drawable.pfpexample },
                     contentDescription = null,
                     modifier = Modifier.size(100.dp).clip(CircleShape).border(3.dp, if(user.isPhilosopher) primaryGold else Color(0xFFC0C0C0), CircleShape).background(surfaceDark),
-                    contentScale = ContentScale.Crop
+                    contentScale = ContentScale.Crop,
+                    error = painterResource(id = R.drawable.pfpexample),
+                    placeholder = painterResource(id = R.drawable.pfpexample)
                 )
             }
 

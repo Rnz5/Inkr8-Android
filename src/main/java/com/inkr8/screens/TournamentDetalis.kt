@@ -1,6 +1,5 @@
 package com.inkr8.screens
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,6 +16,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -29,17 +29,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import com.inkr8.R
 import com.inkr8.data.Evaluation
 import com.inkr8.data.Submissions
 import com.inkr8.data.Tournament
 import com.inkr8.data.TournamentLeaderboardEntry
-import com.inkr8.data.TournamentRequirements
 import com.inkr8.data.TournamentStatus
 import com.inkr8.data.Users
 import com.inkr8.economy.TournamentRewardCalculator
@@ -329,10 +330,13 @@ private fun TournamentOverviewSection(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable(onClick = onHostClick).padding(4.dp)
             ) {
-                Image(
-                    painter = painterResource(id = R.drawable.pfpexample),
+                AsyncImage(
+                    model = tournament.creatorImageURL.ifEmpty { R.drawable.pfpexample },
                     contentDescription = "Host profile picture",
-                    modifier = Modifier.size(40.dp).clip(RoundedCornerShape(50))
+                    modifier = Modifier.size(40.dp).clip(CircleShape),
+                    contentScale = ContentScale.Crop,
+                    error = painterResource(id = R.drawable.pfpexample),
+                    placeholder = painterResource(id = R.drawable.pfpexample)
                 )
 
                 Spacer(modifier = Modifier.width(10.dp))
@@ -480,7 +484,7 @@ private fun previewTournament(): Tournament {
         status = TournamentStatus.ENROLLING,
         enrollmentDeadline = System.currentTimeMillis() + 1000000,
         submissionDeadline = System.currentTimeMillis() + 2000000,
-        requirements = TournamentRequirements()
+        requirements = com.inkr8.data.TournamentRequirements()
     )
 }
 

@@ -304,6 +304,7 @@ fun AppRoot(
                     submission = latestSubmission!!,
                     isUnlockingFeedback = isUnlockingFeedback,
                     isPhilosopher = currentUser.isPhilosopher,
+                    isPlaced = currentUser.isPlaced,
                     onUnlockFeedback = {
                         val submissionId = latestSubmission!!.id
                         isUnlockingFeedback = true
@@ -751,7 +752,13 @@ fun AppRoot(
                             if (submission.status == SubmissionStatus.EVALUATED) {
                                 isResolved = true
                                 latestSubmission = submission
-                                currentScreen = Screen.results
+                                
+                                // REFRESH USER BEFORE NAVIGATING
+                                userRepository.getUserById(currentUser.id) { updatedUser ->
+                                    updatedUser?.let { currentUser = it }
+                                    currentScreen = Screen.results
+                                }
+                                
                             } else if (submission.status == SubmissionStatus.FAILED) {
                                 isResolved = true
                                 Toast.makeText(context, "Did R8 fail to judge this entry?.", Toast.LENGTH_LONG).show()
@@ -775,7 +782,12 @@ fun AppRoot(
                                 if (submission.status == SubmissionStatus.EVALUATED) {
                                     isResolved = true
                                     latestSubmission = submission
-                                    currentScreen = Screen.results
+                                    
+                                    // REFRESH USER BEFORE NAVIGATING
+                                    userRepository.getUserById(currentUser.id) { updatedUser ->
+                                        updatedUser?.let { currentUser = it }
+                                        currentScreen = Screen.results
+                                    }
                                 } else if (submission.status == SubmissionStatus.FAILED) {
                                     isResolved = true
                                     Toast.makeText(context, "Evaluation failed.", Toast.LENGTH_LONG).show()

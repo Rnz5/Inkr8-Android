@@ -7,6 +7,7 @@ data class Tournament(
     val title: String = "",
     val creatorId: String = "",
     val creatorName: String = "",
+    val creatorImageURL: String = "",
     val prizePool: Long = 0L,
     val maxPlayers: Long = 0L,
     val minPlayers: Long = TournamentTimingConfig.MIN_PLAYERS.toLong(),

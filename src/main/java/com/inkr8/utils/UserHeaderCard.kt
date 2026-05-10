@@ -19,6 +19,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.inkr8.R
 import com.inkr8.data.Users
 import com.inkr8.rating.League
@@ -48,15 +49,17 @@ fun UserHeaderCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Image(
-                        painter = painterResource(id = R.drawable.pfpexample),
+                    AsyncImage(
+                        model = user.profileImageURL.ifEmpty { R.drawable.pfpexample },
                         contentDescription = "Profile picture",
                         modifier = Modifier.size(54.dp).clip(CircleShape).border(
                                 width = 2.dp,
                                 color = if (user.isPhilosopher) primaryGold else Color.White.copy(alpha = 0.1f),
                                 shape = CircleShape
                             ),
-                        contentScale = ContentScale.Crop
+                        contentScale = ContentScale.Crop,
+                        error = painterResource(id = R.drawable.pfpexample),
+                        placeholder = painterResource(id = R.drawable.pfpexample)
                     )
                     
                     if (user.isPhilosopher) {
@@ -86,7 +89,7 @@ fun UserHeaderCard(
                         )
                         
                         if (user.isPhilosopher) {
-                            Spacer(modifier = Modifier.width(6.dp))
+                            Spacer(modifier = Modifier.width(6.6.dp))
                             Text(
                                 text = "•",
                                 color = Color.DarkGray,

@@ -27,5 +27,8 @@ data class Users(
     val isPhilosopher: Boolean = false,
     val philosopherSince: Long? = null,
     val hasChosenUsername: Boolean = false,
-    val recentScores: List<Double> = emptyList()
+    val recentScores: List<Double> = emptyList(),
+    val isPlaced: Boolean = false,
+    val placementMatchesPlayed: Int = 0,
+    val totalPlacementScore: Double = 0.0
 )
