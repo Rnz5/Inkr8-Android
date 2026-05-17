@@ -70,6 +70,10 @@ fun Writing(
         if (userText.isBlank()) 0 else userText.trim().split("\\s+".toRegex()).size
     }
 
+    val normalizedUserWords = remember(userText) {
+        userText.lowercase().split(Regex("\\W+")).filter { it.isNotBlank() }.toSet()
+    }
+
     val canSubmit = remember(userText, selectedWords, gamemode, wordCount) {
         if (userText.isBlank()) false
         else {
@@ -97,8 +101,7 @@ fun Writing(
     ) { padding ->
         Column(
             modifier = Modifier.fillMaxSize().padding(padding).statusBarsPadding().navigationBarsPadding().padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+            horizontalAlignment = Alignment.CenterHorizontally) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -181,7 +184,7 @@ fun Writing(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         items(selectedWords) { word ->
-                            val isUsed = userText.lowercase().contains(word.word.lowercase())
+                            val isUsed = normalizedUserWords.contains(word.word.lowercase())
                             LexiconChip(
                                 word = word,
                                 isUsed = isUsed,
@@ -274,7 +277,7 @@ fun Writing(
                                     is PlayMode.Tournament -> "TOURNAMENT"
                                 },
                                 wordsUsed = selectedWords.filter {
-                                    userText.lowercase().contains(it.word.lowercase())
+                                    normalizedUserWords.contains(it.word.lowercase())
                                 },
                                 topicId = if (gamemode is OnTopicWriting) gamemode.topic.id else null,
                                 themeId = if (gamemode is OnTopicWriting) gamemode.theme.id else null,

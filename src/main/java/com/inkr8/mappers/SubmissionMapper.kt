@@ -25,6 +25,7 @@ fun FirestoreSubmission.toDomain(): Submissions {
                 expandedFeedback = it.expandedFeedback,
                 feedbackUnlocked = it.expanded,
                 meritEarned = it.meritEarned,
+                ratingChange = it.ratingChange,
                 resultStatus = try { SubmissionStatus.valueOf(it.resultStatus) } catch (e: Exception) { SubmissionStatus.PENDING }
             )
         },
@@ -52,6 +53,7 @@ fun Submissions.toFirestore(): FirestoreSubmission {
                 expandedFeedback = it.expandedFeedback,
                 expanded = it.feedbackUnlocked,
                 meritEarned = it.meritEarned,
+                ratingChange = it.ratingChange,
                 resultStatus = it.resultStatus.name
             )
         },

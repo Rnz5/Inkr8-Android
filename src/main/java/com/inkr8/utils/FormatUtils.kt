@@ -2,10 +2,13 @@ package com.inkr8.utils
 
 object FormatUtils {
     fun formatPlace(place: Int): String {
-        return when (place) {
-            1 -> "1st"
-            2 -> "2nd"
-            3 -> "3rd"
+        if (place % 100 in 11..13) {
+            return "${place}th"
+        }
+        return when (place % 10) {
+            1 -> "${place}st"
+            2 -> "${place}nd"
+            3 -> "${place}rd"
             else -> "${place}th"
         }
     }

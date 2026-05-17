@@ -299,6 +299,15 @@ fun AppRoot(
             val activity = LocalActivity.current
             var isUnlockingFeedback by remember { mutableStateOf(false) }
 
+            LaunchedEffect(Unit) {
+                if (latestSubmission == null) {
+                    submissionRepository.getLastSubmission(
+                        onSuccess = { latestSubmission = it },
+                        onError = { it.printStackTrace() }
+                    )
+                }
+            }
+
             if (latestSubmission != null) {
                 Results(
                     submission = latestSubmission!!,
@@ -388,6 +397,31 @@ fun AppRoot(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text("No result available.", color = Color.White, fontWeight = FontWeight.Bold)
                         Spacer(modifier = Modifier.height(16.dp))
+
+                        var isRetrying by remember { mutableStateOf(false) }
+
+                        Button(
+                            onClick = {
+                                isRetrying = true
+                                submissionRepository.getLastSubmission(
+                                    onSuccess = {
+                                        latestSubmission = it
+                                        isRetrying = false
+                                    },
+                                    onError = {
+                                        isRetrying = false
+                                        Toast.makeText(context, "Retry failed", Toast.LENGTH_SHORT).show()
+                                    }
+                                )
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black),
+                            enabled = !isRetrying
+                        ) {
+                            Text(if (isRetrying) "Fetching..." else "Retry", fontWeight = FontWeight.Black)
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
                         Button(
                             onClick = { 
                                 pagerInitialPage = 1
@@ -744,16 +778,17 @@ fun AppRoot(
         }
         Screen.loading -> {
             var isResolved by remember { mutableStateOf(false) }
+            var isTimeout by remember { mutableStateOf(false) }
+            var elapsedSeconds by remember { mutableIntStateOf(0) }
 
-            LaunchedEffect(currentUser.id) {
-                submissionRepository.getLastSubmissionRealtime(
+            DisposableEffect(currentUser.id) {
+                val registration = submissionRepository.getLastSubmissionRealtime(
                     onUpdate = { submission ->
-                        if (!isResolved) {
+                        if (!isResolved && !isTimeout) {
                             if (submission.status == SubmissionStatus.EVALUATED) {
                                 isResolved = true
                                 latestSubmission = submission
                                 
-                                // REFRESH USER BEFORE NAVIGATING
                                 userRepository.getUserById(currentUser.id) { updatedUser ->
                                     updatedUser?.let { currentUser = it }
                                     currentScreen = Screen.results
@@ -773,33 +808,54 @@ fun AppRoot(
                         }
                     }
                 )
-
-                while (!isResolved) {
-                    delay(3000)
-                    submissionRepository.getLastSubmission(
-                        onSuccess = { submission ->
-                            if (submission != null && !isResolved) {
-                                if (submission.status == SubmissionStatus.EVALUATED) {
-                                    isResolved = true
-                                    latestSubmission = submission
-                                    
-                                    // REFRESH USER BEFORE NAVIGATING
-                                    userRepository.getUserById(currentUser.id) { updatedUser ->
-                                        updatedUser?.let { currentUser = it }
-                                        currentScreen = Screen.results
-                                    }
-                                } else if (submission.status == SubmissionStatus.FAILED) {
-                                    isResolved = true
-                                    Toast.makeText(context, "Evaluation failed.", Toast.LENGTH_LONG).show()
-                                    currentScreen = Screen.home
-                                }
-                            }
-                        },
-                        onError = { it.printStackTrace() }
-                    )
+                onDispose {
+                    registration?.remove()
                 }
             }
-            LoadingScreen()
+
+            LaunchedEffect(currentUser.id) {
+                val startTime = System.currentTimeMillis()
+                while (!isResolved && !isTimeout) {
+                    val currentMillis = System.currentTimeMillis()
+                    elapsedSeconds = ((currentMillis - startTime) / 1000).toInt()
+                    
+                    if (currentMillis - startTime > 90000) {
+                        isTimeout = true
+                        break
+                    }
+
+                    if (elapsedSeconds % 3 == 0) {
+                        submissionRepository.getLastSubmission(
+                            onSuccess = { submission ->
+                                if (submission != null && !isResolved && !isTimeout) {
+                                    if (submission.status == SubmissionStatus.EVALUATED) {
+                                        isResolved = true
+                                        latestSubmission = submission
+                                        
+                                        userRepository.getUserById(currentUser.id) { updatedUser ->
+                                            updatedUser?.let { currentUser = it }
+                                            currentScreen = Screen.results
+                                        }
+                                    } else if (submission.status == SubmissionStatus.FAILED) {
+                                        isResolved = true
+                                        Toast.makeText(context, "Evaluation failed.", Toast.LENGTH_LONG).show()
+                                        currentScreen = Screen.home
+                                    }
+                                }
+                            },
+                            onError = { it.printStackTrace() }
+                        )
+                    }
+                    delay(1000)
+                }
+            }
+            LoadingScreen(
+                elapsedSeconds = elapsedSeconds,
+                isTimeout = isTimeout,
+                onReturnHome = {
+                    currentScreen = Screen.home
+                }
+            )
         }
         Screen.createTournament -> {
             CreateTournamentScreen(

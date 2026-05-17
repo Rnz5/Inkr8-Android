@@ -1,9 +1,10 @@
 package com.inkr8.repository
 
+import com.google.android.gms.tasks.Tasks
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.QuerySnapshot
 import com.inkr8.data.Users
-import com.inkr8.economy.EconomyConfig
 import com.google.firebase.functions.FirebaseFunctions
 import com.inkr8.rating.League
 
@@ -360,12 +361,20 @@ class UserRepository(
             return
         }
 
-        firestore.collection("users")
-            .whereIn("id", distinctIds)
-            .get()
-            .addOnSuccessListener { snapshot ->
-                val users = snapshot.toObjects(Users::class.java)
-                onResult(users.associateBy { it.id })
+        val tasks = distinctIds.chunked(30).map { chunk ->
+            firestore.collection("users").whereIn("id", chunk).get()
+        }
+
+        Tasks.whenAllSuccess<QuerySnapshot>(tasks)
+            .addOnSuccessListener { snapshots ->
+                val allUsers = mutableMapOf<String, Users>()
+                for (snapshot in snapshots) {
+                    val users = snapshot.toObjects(Users::class.java)
+                    users.forEach { user ->
+                        allUsers[user.id] = user
+                    }
+                }
+                onResult(allUsers)
             }
             .addOnFailureListener {
                 it.printStackTrace()
