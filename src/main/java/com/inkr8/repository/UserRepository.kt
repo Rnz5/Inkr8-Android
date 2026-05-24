@@ -403,4 +403,15 @@ class UserRepository(
             }
             .addOnFailureListener { onError(it) }
     }
+
+    fun markPlacementRevealSeen(
+        userId: String,
+        onSuccess: () -> Unit,
+        onError: (Exception) -> Unit
+    ) {
+        usersCollection.document(userId)
+            .update("hasSeenPlacementReveal", true)
+            .addOnSuccessListener { onSuccess() }
+            .addOnFailureListener { onError(it) }
+    }
 }

@@ -225,6 +225,7 @@ class FirestoreTournamentRepository {
         onError: (Exception) -> Unit
     ): ListenerRegistration {
         return tournamentsCollection
+            .whereIn("status", listOf("ENROLLING", "ACTIVE"))
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     onError(error)
@@ -245,11 +246,7 @@ class FirestoreTournamentRepository {
                     }
                 }
 
-                val filtered = tournaments.filter {
-                    it.status == TournamentStatus.ENROLLING || it.status == TournamentStatus.ACTIVE
-                }
-
-                val sorted = filtered.sortedWith(
+                val sorted = tournaments.sortedWith(
                     compareBy<Tournament> {
                         when (it.status) {
                             TournamentStatus.ENROLLING -> 0

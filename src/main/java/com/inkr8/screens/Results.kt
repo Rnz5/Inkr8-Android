@@ -165,11 +165,7 @@ fun Results(
                             enabled = !isUnlockingFeedback,
                             shape = RoundedCornerShape(10.dp),
                             contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color.White,
-                                contentColor = Color.Black,
-                                disabledContainerColor = Color.White.copy(alpha = 0.1f)
-                            ),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black, disabledContainerColor = Color.White.copy(alpha = 0.1f)),
                             modifier = Modifier.height(36.dp)
                         ) {
                             Text(
@@ -228,55 +224,101 @@ fun Results(
             shape = RoundedCornerShape(14.dp),
             colors = CardDefaults.cardColors(containerColor = surfaceDark)
         ) {
-            Row(
-                modifier = Modifier.padding(20.dp).fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text("Merit Gain", color = Color.Gray, fontSize = 9.sp, fontWeight = FontWeight.Bold)
-                    Text(
-                        text = "+${evaluation.meritEarned}",
-                        color = primaryGold,
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Black
-                    )
-                }
-                
-                Box(modifier = Modifier.width(1.dp).height(32.dp).background(Color.White.copy(alpha = 0.05f)))
-
-                if (submission.playmode == "RANKED") {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("Rating", color = Color.Gray, fontSize = 9.sp, fontWeight = FontWeight.Bold)
-                        if (isPlaced) {
-                            val sign = if (evaluation.ratingChange >= 0) "+" else ""
-                            Text(
-                                text = "$sign${evaluation.ratingChange}",
-                                color = if (evaluation.ratingChange >= 0) Color(0xFF4CAF50) else Color(0xFFF44336),
-                                fontSize = 24.sp,
-                                fontWeight = FontWeight.Black
-                            )
-                        } else {
-                            Text(
-                                text = "Calibrating",
-                                color = Color.White,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Black,
-                                letterSpacing = 1.sp
-                            )
-                        }
+            Column(modifier = Modifier.padding(20.dp)) {
+                if (submission.playmode == "RANKED" && submission.matchResult != null) {
+                    val matchResult = submission.matchResult
+                    val outcomeColor = when (matchResult.outcome) {
+                        "WIN" -> Color(0xFF4CAF50)
+                        "LOSS" -> Color(0xFFF44336)
+                        else -> Color.Gray
                     }
-                    Box(modifier = Modifier.width(1.dp).height(32.dp).background(Color.White.copy(alpha = 0.05f)))
-                }
-                
-                Column(horizontalAlignment = Alignment.End) {
-                    Text("Lexicon", color = Color.Gray, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                    val outcomeLabel = when (matchResult.outcome) {
+                        "WIN" -> "Won"
+                        "LOSS" -> "Lost"
+                        else -> "Draw"
+                    }
+                    val opponentLabel = if (matchResult.opponentId == "GHOST") {
+                        "Unmatched — compared against rolling average."
+                    } else {
+                        "You scored ${"%.1f".format(submission.evaluation?.finalScore ?: 0.0)}. " +
+                        "${matchResult.opponentName} scored ${"%.1f".format(matchResult.opponentScore)}. " +
+                        "You $outcomeLabel."
+                    }
+
                     Text(
-                        text = "${submission.wordCount} Words",
-                        color = Color.White,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
+                        text = opponentLabel,
+                        color = outcomeColor,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        lineHeight = 18.sp
                     )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    HorizontalDivider(color = Color.White.copy(alpha = 0.05f))
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text("Merit Gain", color = Color.Gray, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                        Text(
+                            text = "+${submission.evaluation?.meritEarned ?: 0}",
+                            color = primaryGold,
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Black
+                        )
+                    }
+
+                    Box(modifier = Modifier.width(1.dp).height(32.dp).background(Color.White.copy(alpha = 0.05f)))
+
+                    if (submission.playmode == "RANKED") {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("Rating", color = Color.Gray, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                            if (isPlaced) {
+                                val ratingChange = submission.matchResult?.ratingChange
+                                    ?: submission.evaluation?.ratingChange ?: 0L
+                                if (submission.matchStatus == "PENDING") {
+                                    Text(
+                                        text = "Pending",
+                                        color = Color.Gray,
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Black,
+                                        letterSpacing = 1.sp
+                                    )
+                                } else {
+                                    val sign = if (ratingChange >= 0) "+" else ""
+                                    Text(
+                                        text = "$sign$ratingChange",
+                                        color = if (ratingChange >= 0) Color(0xFF4CAF50) else Color(0xFFF44336),
+                                        fontSize = 24.sp,
+                                        fontWeight = FontWeight.Black
+                                    )
+                                }
+                            } else {
+                                Text(
+                                    text = "Calibrating",
+                                    color = Color.White,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Black,
+                                    letterSpacing = 1.sp
+                                )
+                            }
+                        }
+                        Box(modifier = Modifier.width(1.dp).height(32.dp).background(Color.White.copy(alpha = 0.05f)))
+                    }
+
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text("Lexicon", color = Color.Gray, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                        Text(
+                            text = "${submission.wordCount} Words",
+                            color = Color.White,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
         }

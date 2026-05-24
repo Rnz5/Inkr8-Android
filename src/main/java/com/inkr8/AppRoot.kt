@@ -27,6 +27,7 @@ fun AppRoot(
     onSessionEnded: () -> Unit
 ) {
     var currentUser by remember { mutableStateOf(initialUser) }
+    var previousUserIsPlaced by remember { mutableStateOf(initialUser.isPlaced) }
     val context = LocalContext.current
     var pantheonPosition by remember { mutableStateOf<Int?>(null) }
     val submissionRepository = remember { FirestoreSubmissionRepository() }
@@ -65,7 +66,7 @@ fun AppRoot(
     }
 
     LaunchedEffect(currentUser.id, currentUser.rating) {
-        if (currentUser.rating >= PantheonManager.MIN_RATING) {
+        if (currentUser.rating >= PantheonManager.MIN_RATING - 20) {
             userRepository.getTop100Users { top100 ->
                 val (isPantheon, position) =
                     PantheonManager.checkPantheonStatus(currentUser, top100)
@@ -790,8 +791,12 @@ fun AppRoot(
                                 latestSubmission = submission
                                 
                                 userRepository.getUserById(currentUser.id) { updatedUser ->
-                                    updatedUser?.let { currentUser = it }
-                                    currentScreen = Screen.results
+                                    updatedUser?.let { freshUser ->
+                                        val justGotPlaced = !previousUserIsPlaced && freshUser.isPlaced && !freshUser.hasSeenPlacementReveal
+                                        currentUser = freshUser
+                                        previousUserIsPlaced = freshUser.isPlaced
+                                        currentScreen = if (justGotPlaced) Screen.placementReveal else Screen.results
+                                    }
                                 }
                                 
                             } else if (submission.status == SubmissionStatus.FAILED) {
@@ -814,39 +819,41 @@ fun AppRoot(
             }
 
             LaunchedEffect(currentUser.id) {
-                val startTime = System.currentTimeMillis()
+                var pollCount = 0
                 while (!isResolved && !isTimeout) {
-                    val currentMillis = System.currentTimeMillis()
-                    elapsedSeconds = ((currentMillis - startTime) / 1000).toInt()
+                    delay(3000)
+                    pollCount++
+                    elapsedSeconds = pollCount * 3
                     
-                    if (currentMillis - startTime > 90000) {
+                    if (elapsedSeconds > 90) {
                         isTimeout = true
                         break
                     }
 
-                    if (elapsedSeconds % 3 == 0) {
-                        submissionRepository.getLastSubmission(
-                            onSuccess = { submission ->
-                                if (submission != null && !isResolved && !isTimeout) {
-                                    if (submission.status == SubmissionStatus.EVALUATED) {
-                                        isResolved = true
-                                        latestSubmission = submission
-                                        
-                                        userRepository.getUserById(currentUser.id) { updatedUser ->
-                                            updatedUser?.let { currentUser = it }
-                                            currentScreen = Screen.results
+                    submissionRepository.getLastSubmission(
+                        onSuccess = { submission ->
+                            if (submission != null && !isResolved && !isTimeout) {
+                                if (submission.status == SubmissionStatus.EVALUATED) {
+                                    isResolved = true
+                                    latestSubmission = submission
+                                    
+                                    userRepository.getUserById(currentUser.id) { updatedUser ->
+                                        updatedUser?.let { freshUser ->
+                                            val justGotPlaced = !previousUserIsPlaced && freshUser.isPlaced && !freshUser.hasSeenPlacementReveal
+                                            currentUser = freshUser
+                                            previousUserIsPlaced = freshUser.isPlaced
+                                            currentScreen = if (justGotPlaced) Screen.placementReveal else Screen.results
                                         }
-                                    } else if (submission.status == SubmissionStatus.FAILED) {
-                                        isResolved = true
-                                        Toast.makeText(context, "Evaluation failed.", Toast.LENGTH_LONG).show()
-                                        currentScreen = Screen.home
                                     }
+                                } else if (submission.status == SubmissionStatus.FAILED) {
+                                    isResolved = true
+                                    Toast.makeText(context, "Evaluation failed.", Toast.LENGTH_LONG).show()
+                                    currentScreen = Screen.home
                                 }
-                            },
-                            onError = { it.printStackTrace() }
-                        )
-                    }
-                    delay(1000)
+                            }
+                        },
+                        onError = { it.printStackTrace() }
+                    )
                 }
             }
             LoadingScreen(
@@ -854,6 +861,23 @@ fun AppRoot(
                 isTimeout = isTimeout,
                 onReturnHome = {
                     currentScreen = Screen.home
+                }
+            )
+        }
+        Screen.placementReveal -> {
+            PlacementRevealScreen(
+                league = League.fromRating(currentUser.rating),
+                onContinue = {
+                    userRepository.markPlacementRevealSeen(
+                        userId = currentUser.id,
+                        onSuccess = {
+                            userRepository.getUserById(currentUser.id) { updatedUser ->
+                                updatedUser?.let { currentUser = it }
+                            }
+                        },
+                        onError = { it.printStackTrace() }
+                    )
+                    currentScreen = Screen.results
                 }
             )
         }
@@ -973,5 +997,6 @@ enum class Screen {
     createTournament,
     postSubmissionAd,
     paywall,
-    usernameSetup
+    usernameSetup,
+    placementReveal
 }

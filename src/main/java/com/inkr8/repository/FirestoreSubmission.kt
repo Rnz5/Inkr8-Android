@@ -18,5 +18,7 @@ data class FirestoreSubmission(
     val status: String = "PENDING",
     val playmode: String = "PRACTICE",
     @get:PropertyName("isSaved")
-    val isSaved: Boolean = false
+    val isSaved: Boolean = false,
+    val matchResult: Map<String, Any>? = null,
+    val matchStatus: String = "UNMATCHED"
 )

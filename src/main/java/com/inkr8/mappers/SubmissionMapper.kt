@@ -29,7 +29,17 @@ fun FirestoreSubmission.toDomain(): Submissions {
                 resultStatus = try { SubmissionStatus.valueOf(it.resultStatus) } catch (e: Exception) { SubmissionStatus.PENDING }
             )
         },
-        status = try { SubmissionStatus.valueOf(status) } catch (e: Exception) { SubmissionStatus.PENDING }
+        status = try { SubmissionStatus.valueOf(status) } catch (e: Exception) { SubmissionStatus.PENDING },
+        matchStatus = matchStatus,
+        matchResult = matchResult?.let { map ->
+            MatchResult(
+                opponentId = map["opponentId"] as? String ?: "",
+                opponentName = map["opponentName"] as? String ?: "",
+                opponentScore = (map["opponentScore"] as? Number)?.toDouble() ?: 0.0,
+                outcome = map["outcome"] as? String ?: "",
+                ratingChange = (map["ratingChange"] as? Number)?.toLong() ?: 0L
+            )
+        }
     )
 }
 
@@ -57,6 +67,16 @@ fun Submissions.toFirestore(): FirestoreSubmission {
                 resultStatus = it.resultStatus.name
             )
         },
-        status = status.name
+        status = status.name,
+        matchStatus = matchStatus,
+        matchResult = matchResult?.let {
+            mapOf(
+                "opponentId" to it.opponentId,
+                "opponentName" to it.opponentName,
+                "opponentScore" to it.opponentScore,
+                "outcome" to it.outcome,
+                "ratingChange" to it.ratingChange
+            )
+        }
     )
 }

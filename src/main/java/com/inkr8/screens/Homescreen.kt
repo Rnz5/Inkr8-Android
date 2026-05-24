@@ -73,6 +73,59 @@ fun HomeScreen(
 
         Spacer(modifier = Modifier.height(28.dp))
 
+        if (user.currentStreak > 0) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = surfaceDark),
+                border = BorderStroke(1.dp, primaryGold.copy(alpha = 0.15f))
+            ) {
+                Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 14.dp)) {
+                    Text(
+                        text = "Continuity",
+                        color = primaryGold,
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = 2.sp
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        val streakLabel = when {
+                            user.currentStreak >= 7 -> "Day ${user.currentStreak} — Peak Discipline. +12% Merit."
+                            user.currentStreak >= 3 -> "Day ${user.currentStreak} — Sustained."
+                            user.currentStreak == 2 -> "Day 2 — Returning. +3% Merit."
+                            else -> "Day 1 — Initiated."
+                        }
+                        Text(
+                            text = streakLabel,
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(10.dp))
+                    LinearProgressIndicator(
+                        progress = { (user.currentStreak.coerceAtMost(7)).toFloat() / 7f },
+                        modifier = Modifier.fillMaxWidth().height(3.dp).clip(RoundedCornerShape(2.dp)),
+                        color = primaryGold,
+                        trackColor = Color.White.copy(alpha = 0.05f)
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "${user.currentStreak}/7 — Submit tomorrow to maintain continuity.",
+                        color = Color.DarkGray,
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+
         Card(
             modifier = Modifier.fillMaxWidth().height(120.dp),
             shape = RoundedCornerShape(24.dp),

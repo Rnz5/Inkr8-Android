@@ -30,5 +30,8 @@ data class Users(
     val recentScores: List<Double> = emptyList(),
     val isPlaced: Boolean = false,
     val placementMatchesPlayed: Int = 0,
-    val totalPlacementScore: Double = 0.0
+    val totalPlacementScore: Double = 0.0,
+    val currentStreak: Int = 0,
+    val lastSubmissionDay: Long = 0,
+    val hasSeenPlacementReveal: Boolean = false
 )

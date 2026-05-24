@@ -29,6 +29,18 @@ object EconomyConfig{
         return BASE_SAVE_SUBMISSION_COST + (increments * SAVE_COST_INCREMENT)
     }
 
+    fun getStreakMultiplier(streak: Int): Double {
+        return when {
+            streak >= 7 -> 1.12
+            streak >= 6 -> 1.10
+            streak >= 5 -> 1.08
+            streak >= 4 -> 1.06
+            streak >= 3 -> 1.05
+            streak >= 2 -> 1.03
+            else -> 1.0
+        }
+    }
+
     fun insufficientMerit(): String{
         val phrases = listOf(
             "Not enough Merit",

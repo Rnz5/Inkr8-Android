@@ -22,6 +22,7 @@ import com.inkr8.data.*
 import com.inkr8.economy.EconomyConfig
 import com.inkr8.economy.RankedCostCalculator
 import com.inkr8.rating.League
+import com.inkr8.repository.FirestoreSubmissionRepository
 import com.inkr8.repository.FirestoreTournamentRepository
 import com.inkr8.repository.ThemeRepository
 import com.inkr8.repository.TopicRepository
@@ -46,10 +47,12 @@ fun Competitions(
     val tournamentRepository = remember { FirestoreTournamentRepository() }
     val themeRepository = remember { ThemeRepository() }
     val topicRepository = remember { TopicRepository() }
-    
+    val submissionRepository = remember { FirestoreSubmissionRepository() }
+
     var tournaments by remember { mutableStateOf<List<Tournament>>(emptyList()) }
     var rankedGamemode by remember { mutableStateOf<Gamemode>(StandardWriting) }
     var isGamemodeLoaded by remember { mutableStateOf(false) }
+    var recentRankedSubmissions by remember { mutableStateOf<List<Submissions>>(emptyList()) }
 
     val primaryGold = Color(0xFFFFD700)
     val backgroundDark = Color(0xFF0F0F0F)
@@ -61,6 +64,14 @@ fun Competitions(
             onError = { it.printStackTrace() }
         )
         onDispose { registration.remove() }
+    }
+
+    DisposableEffect(Unit) {
+        val registration = submissionRepository.listenToRecentRankedSubmissions(
+            onUpdate = { recentRankedSubmissions = it },
+            onError = { it.printStackTrace() }
+        )
+        onDispose { registration?.remove() }
     }
 
     LaunchedEffect(Unit) {
@@ -132,7 +143,7 @@ fun Competitions(
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Box(
-                                        modifier = Modifier.size(24.dp).border(1.dp, Color.Gray, CircleShape).clickable { /* info screen */ },
+                                        modifier = Modifier.size(24.dp).border(1.dp, Color.Gray, CircleShape).clickable { },
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Text("i", color = Color.Gray, fontSize = 12.sp, fontWeight = FontWeight.Bold)
@@ -146,7 +157,6 @@ fun Competitions(
                                         letterSpacing = 0.5.sp
                                     )
                                 }
-
                                 IconButton(
                                     onClick = onNavigateToLeaderboard,
                                     modifier = Modifier.background(Color.White.copy(alpha = 0.05f), CircleShape).size(32.dp)
@@ -193,7 +203,6 @@ fun Competitions(
                                         )
                                     }
                                 }
-
                                 Button(
                                     onClick = { if (user.merit >= entryCost) onNavigateToWriting(rankedGamemode) },
                                     shape = RoundedCornerShape(10.dp),
@@ -212,6 +221,78 @@ fun Competitions(
                                     color = primaryGold.copy(alpha = 0.5f),
                                     trackColor = Color.White.copy(alpha = 0.05f)
                                 )
+                            }
+
+                            if (recentRankedSubmissions.isNotEmpty()) {
+                                Spacer(modifier = Modifier.height(16.dp))
+                                HorizontalDivider(color = Color.White.copy(alpha = 0.05f))
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Text(
+                                    text = "Recent Matches",
+                                    color = Color.Gray,
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Black,
+                                    letterSpacing = 2.sp
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                recentRankedSubmissions.take(5).forEach { submission ->
+                                    val statusColor = when (submission.matchStatus) {
+                                        "MATCHED" -> when (submission.matchResult?.outcome) {
+                                            "WIN" -> Color(0xFF4CAF50)
+                                            "LOSS" -> Color(0xFFF44336)
+                                            else -> Color.Gray
+                                        }
+                                        "GHOST" -> Color(0xFF9E9E9E)
+                                        "PENDING" -> Color(0xFFFFD700)
+                                        else -> Color.DarkGray
+                                    }
+                                    val statusLabel = when (submission.matchStatus) {
+                                        "MATCHED" -> when (submission.matchResult?.outcome) {
+                                            "WIN" -> "Won vs ${submission.matchResult.opponentName}"
+                                            "LOSS" -> "Lost vs ${submission.matchResult.opponentName}"
+                                            "DRAW" -> "Draw vs ${submission.matchResult.opponentName}"
+                                            else -> "Matched"
+                                        }
+                                        "GHOST" -> "Unmatched — resolved"
+                                        "PENDING" -> "Awaiting opponent..."
+                                        else -> "Unknown"
+                                    }
+                                    val ratingText = when (submission.matchStatus) {
+                                        "MATCHED", "GHOST" -> {
+                                            val change = submission.matchResult?.ratingChange ?: 0L
+                                            val sign = if (change >= 0) "+" else ""
+                                            "$sign$change"
+                                        }
+                                        else -> ""
+                                    }
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Box(
+                                                modifier = Modifier.size(6.dp).clip(CircleShape).background(statusColor)
+                                            )
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text(
+                                                text = statusLabel,
+                                                color = Color.LightGray,
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.Medium
+                                             )
+                                        }
+                                        if (ratingText.isNotEmpty()) {
+                                            Text(
+                                                text = ratingText,
+                                                color = statusColor,
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.Black
+                                            )
+                                        }
+                                    }
+                                }
                             }
                         }
                     }

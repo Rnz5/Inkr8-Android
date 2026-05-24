@@ -14,5 +14,7 @@ data class Submissions(
     val isSaved: Boolean = false,
     val wordsUsed: List<Words> = emptyList(),
     val topicId: String? = null,
-    val themeId: String? = null
+    val themeId: String? = null,
+    val matchResult: MatchResult? = null,
+    val matchStatus: String = "UNMATCHED"
 )

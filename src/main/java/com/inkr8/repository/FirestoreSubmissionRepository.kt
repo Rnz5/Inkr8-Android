@@ -80,6 +80,31 @@ class FirestoreSubmissionRepository() {
             }
     }
 
+    fun listenToRecentRankedSubmissions(
+        onUpdate: (List<Submissions>) -> Unit,
+        onError: (Exception) -> Unit
+    ): ListenerRegistration? {
+        val userId = AuthManager.currentUser()?.uid ?: return null
+        val since = System.currentTimeMillis() - (48 * 60 * 60 * 1000L)
+
+        return submissionsCollection
+            .whereEqualTo("authorId", userId)
+            .whereEqualTo("playmode", "RANKED")
+            .whereGreaterThanOrEqualTo("timestamp", since)
+            .orderBy("timestamp", Query.Direction.DESCENDING)
+            .limit(10)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    onError(error)
+                    return@addSnapshotListener
+                }
+                val submissions = snapshot?.documents?.mapNotNull { doc ->
+                    doc.toObject(FirestoreSubmission::class.java)?.copy(id = doc.id)?.toDomain()
+                } ?: emptyList()
+                onUpdate(submissions)
+            }
+    }
+
     fun getSubmissionContent(
         submissionId: String,
         onSuccess: (String) -> Unit,
