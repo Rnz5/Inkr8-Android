@@ -23,6 +23,12 @@
 </p>
 
 ---
+## Content Database
+
+The public vocabulary database used by Inkr8, including curated words, themes, and writing prompts is available separately:
+
+### **[Inkr8-Content Repository →](https://github.com/Rnz5/Inkr8-Content)**
+---
 
 # The Future of Writing Mastery
 
