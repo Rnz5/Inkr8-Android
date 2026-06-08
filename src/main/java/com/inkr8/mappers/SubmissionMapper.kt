@@ -1,7 +1,6 @@
 package com.inkr8.mappers
 
 import com.inkr8.data.*
-import com.inkr8.repository.FirestoreEvaluation
 import com.inkr8.repository.FirestoreSubmission
 
 fun FirestoreSubmission.toDomain(): Submissions {
@@ -14,21 +13,11 @@ fun FirestoreSubmission.toDomain(): Submissions {
         characterCount = characterCount,
         wordsUsed = wordsUsed,
         gamemode = gamemodeName,
+        playmode = playmode,
         topicId = topicId,
         themeId = themeId,
         isSaved = isSaved,
-        evaluation = evaluation?.let {
-            Evaluation(
-                submissionId = it.submissionId,
-                finalScore = it.finalScore,
-                feedback = it.feedback,
-                expandedFeedback = it.expandedFeedback,
-                feedbackUnlocked = it.expanded,
-                meritEarned = it.meritEarned,
-                ratingChange = it.ratingChange,
-                resultStatus = try { SubmissionStatus.valueOf(it.resultStatus) } catch (e: Exception) { SubmissionStatus.PENDING }
-            )
-        },
+        evaluation = evaluation?.toDomain(),
         status = try { SubmissionStatus.valueOf(status) } catch (e: Exception) { SubmissionStatus.PENDING },
         matchStatus = matchStatus,
         matchResult = matchResult?.let { map ->
@@ -53,20 +42,11 @@ fun Submissions.toFirestore(): FirestoreSubmission {
         characterCount = characterCount,
         wordsUsed = wordsUsed,
         gamemodeName = gamemode,
+        playmode = playmode,
         topicId = topicId,
         themeId = themeId,
         isSaved = isSaved,
-        evaluation = evaluation?.let {
-            FirestoreEvaluation(
-                finalScore = it.finalScore,
-                feedback = it.feedback,
-                expandedFeedback = it.expandedFeedback,
-                expanded = it.feedbackUnlocked,
-                meritEarned = it.meritEarned,
-                ratingChange = it.ratingChange,
-                resultStatus = it.resultStatus.name
-            )
-        },
+        evaluation = evaluation?.toFirestore(),
         status = status.name,
         matchStatus = matchStatus,
         matchResult = matchResult?.let {

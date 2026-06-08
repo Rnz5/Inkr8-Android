@@ -298,7 +298,6 @@ fun AppRoot(
         )
         Screen.results -> {
             val activity = LocalActivity.current
-            var isUnlockingFeedback by remember { mutableStateOf(false) }
 
             LaunchedEffect(Unit) {
                 if (latestSubmission == null) {
@@ -312,45 +311,7 @@ fun AppRoot(
             if (latestSubmission != null) {
                 Results(
                     submission = latestSubmission!!,
-                    isUnlockingFeedback = isUnlockingFeedback,
-                    isPhilosopher = currentUser.isPhilosopher,
                     isPlaced = currentUser.isPlaced,
-                    onUnlockFeedback = {
-                        val submissionId = latestSubmission!!.id
-                        isUnlockingFeedback = true
-
-                        submissionRepository.unlockFeedbackExpansion(
-                            submissionId = submissionId,
-                            skipMeritCost = currentUser.isPhilosopher,
-                            onSuccess = { cost ->
-                                isUnlockingFeedback = false
-                                // Optimistically update latestSubmission
-                                latestSubmission = latestSubmission?.let { current ->
-                                    current.copy(
-                                        evaluation = current.evaluation?.copy(feedbackUnlocked = true)
-                                    )
-                                }
-
-                                userRepository.getUserById(currentUser.id) { updatedUser ->
-                                    updatedUser?.let { currentUser = it }
-                                }
-
-                                Toast.makeText(
-                                    context,
-                                    if (currentUser.isPhilosopher) "Decrypted" else "Decrypted for $cost Merit",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            },
-                            onError = { e ->
-                                isUnlockingFeedback = false
-                                Toast.makeText(
-                                    context,
-                                    e.message ?: "Failed to expand feedback",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                        )
-                    },
                     onNavigateBack = {
                         if (currentUser.isPhilosopher) {
                             pagerInitialPage = 1
@@ -358,12 +319,12 @@ fun AppRoot(
                         } else {
                             submissionAdCounter++
                             pendingNavigationAfterAd = Screen.home
+                            pagerInitialPage = 1
 
                             if (submissionAdCounter % 2 == 0) {
                                 activity?.let {
                                     AdManager.showAd(it)
                                 }
-                                pagerInitialPage = 1
                                 currentScreen = Screen.home
                             } else {
                                 currentScreen = Screen.postSubmissionAd
@@ -377,12 +338,12 @@ fun AppRoot(
                         } else {
                             submissionAdCounter++
                             pendingNavigationAfterAd = Screen.practice
+                            pagerInitialPage = 0
 
                             if (submissionAdCounter % 2 == 0) {
                                 activity?.let {
                                     AdManager.showAd(it)
                                 }
-                                pagerInitialPage = 0
                                 currentScreen = Screen.home
                             } else {
                                 currentScreen = Screen.postSubmissionAd
@@ -864,23 +825,6 @@ fun AppRoot(
                 }
             )
         }
-        Screen.placementReveal -> {
-            PlacementRevealScreen(
-                league = League.fromRating(currentUser.rating),
-                onContinue = {
-                    userRepository.markPlacementRevealSeen(
-                        userId = currentUser.id,
-                        onSuccess = {
-                            userRepository.getUserById(currentUser.id) { updatedUser ->
-                                updatedUser?.let { currentUser = it }
-                            }
-                        },
-                        onError = { it.printStackTrace() }
-                    )
-                    currentScreen = Screen.results
-                }
-            )
-        }
         Screen.createTournament -> {
             CreateTournamentScreen(
                 user = currentUser,
@@ -974,6 +918,25 @@ fun AppRoot(
                 },
                 validateUsername = { name ->
                     userRepository.validateUsername(name)
+                }
+            )
+        }
+        Screen.placementReveal -> {
+            PlacementRevealScreen(
+                league = League.fromRating(currentUser.rating),
+                onContinue = {
+                    userRepository.markPlacementRevealSeen(
+                        userId = currentUser.id,
+                        onSuccess = {
+                            userRepository.getUserById(currentUser.id) { updatedUser ->
+                                updatedUser?.let { freshUser ->
+                                    currentUser = freshUser
+                                    currentScreen = Screen.results
+                                }
+                            }
+                        },
+                        onError = { it.printStackTrace() }
+                    )
                 }
             )
         }

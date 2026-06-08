@@ -1,5 +1,6 @@
 package com.inkr8.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -14,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -26,6 +28,7 @@ import com.inkr8.repository.FirestoreSubmissionRepository
 import com.inkr8.repository.FirestoreTournamentRepository
 import com.inkr8.repository.ThemeRepository
 import com.inkr8.repository.TopicRepository
+import com.inkr8.repository.UserRepository
 import com.inkr8.ui.theme.Inkr8Theme
 import com.inkr8.utils.SystemConfig
 import com.inkr8.utils.TournamentCard
@@ -48,11 +51,14 @@ fun Competitions(
     val themeRepository = remember { ThemeRepository() }
     val topicRepository = remember { TopicRepository() }
     val submissionRepository = remember { FirestoreSubmissionRepository() }
+    val userRepository = remember { UserRepository() }
+    val context = LocalContext.current
 
     var tournaments by remember { mutableStateOf<List<Tournament>>(emptyList()) }
     var rankedGamemode by remember { mutableStateOf<Gamemode>(StandardWriting) }
     var isGamemodeLoaded by remember { mutableStateOf(false) }
     var recentRankedSubmissions by remember { mutableStateOf<List<Submissions>>(emptyList()) }
+    var isEnteringRanked by remember { mutableStateOf(false) }
 
     val primaryGold = Color(0xFFFFD700)
     val backgroundDark = Color(0xFF0F0F0F)
@@ -204,12 +210,36 @@ fun Competitions(
                                     }
                                 }
                                 Button(
-                                    onClick = { if (user.merit >= entryCost) onNavigateToWriting(rankedGamemode) },
+                                    onClick = {
+                                        if (isEnteringRanked) return@Button
+                                        if (user.merit < entryCost) {
+                                            Toast.makeText(context, EconomyConfig.insufficientMerit(), Toast.LENGTH_SHORT).show()
+                                            return@Button
+                                        }
+
+                                        isEnteringRanked = true
+                                        userRepository.applyMeritAction(
+                                            action = "ENTER_RANKED",
+                                            onSuccess = {
+                                                isEnteringRanked = false
+                                                onNavigateToWriting(rankedGamemode)
+                                            },
+                                            onError = { e ->
+                                                isEnteringRanked = false
+                                                Toast.makeText(context, e.message ?: "Access Denied", Toast.LENGTH_SHORT).show()
+                                            }
+                                        )
+                                    },
+                                    enabled = !isEnteringRanked,
                                     shape = RoundedCornerShape(10.dp),
                                     colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black),
                                     modifier = Modifier.height(40.dp)
                                 ) {
-                                    Text("Enter • $entryCost", fontWeight = FontWeight.Black, fontSize = 12.sp)
+                                    Text(
+                                        text = if (isEnteringRanked) "Decrypting..." else "Enter • $entryCost",
+                                        fontWeight = FontWeight.Black,
+                                        fontSize = 12.sp
+                                    )
                                 }
                             }
 

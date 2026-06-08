@@ -21,13 +21,12 @@ import androidx.compose.ui.unit.sp
 import com.inkr8.data.Evaluation
 import com.inkr8.data.SubmissionStatus
 import com.inkr8.data.Submissions
-import com.inkr8.economy.EconomyConfig
 import com.inkr8.ui.theme.Inkr8Theme
 
 private val previewSubmission = Submissions(
     id = "preview-submission",
     authorId = "user123",
-    content = "This is a preview paragraph written to test the visual structure of the new results screen and how the feedback section behaves before and after expansion. R8 is watching every keystroke, judging the structural integrity of your linguistic output.",
+    content = "This is a preview paragraph written to test the visual structure of the new results screen. R8 is watching every keystroke, judging the structural integrity of your linguistic output.",
     timestamp = System.currentTimeMillis(),
     wordCount = 38,
     characterCount = 214,
@@ -36,10 +35,7 @@ private val previewSubmission = Submissions(
     evaluation = Evaluation(
         submissionId = "preview-submission",
         finalScore = 82.47,
-        feedback = "Your grammar held together better than expected. The structure was clear, but the phrasing still lacked the kind of sharpness that would make R8 raise an eyebrow.",
-        expandedFeedback = "Structural analysis complete. Your use of syntax is adequate but predictable. To reach elite status, you must abandon safe phrasing. The metrics indicate a high coherence score, yet your creativity index remains within common parameters. Refine your lexicon or remain forgotten in the archives.",
-        isExpanded = false,
-        feedbackUnlocked = false,
+        feedback = "Structural analysis complete. Your use of syntax is adequate but predictable. To reach elite status, you must abandon safe phrasing. The metrics indicate a high coherence score, yet your creativity index remains within common parameters. Refine your lexicon or remain forgotten in the archives.",
         resultStatus = SubmissionStatus.EVALUATED,
         meritEarned = 57,
         ratingChange = 5
@@ -51,10 +47,7 @@ private val previewSubmission = Submissions(
 @Composable
 fun Results(
     submission: Submissions,
-    isUnlockingFeedback: Boolean,
-    isPhilosopher: Boolean,
     isPlaced: Boolean,
-    onUnlockFeedback: () -> Unit,
     onNavigateBack: () -> Unit,
     onNavigateToPractice: () -> Unit,
 ) {
@@ -63,22 +56,7 @@ fun Results(
             Text("R8 Judging...", color = Color.Gray, letterSpacing = 2.sp, fontWeight = FontWeight.Bold)
         }
 
-    val isUnlockedByMerit = evaluation.feedbackUnlocked
-    val isEffectivelyUnlocked = isUnlockedByMerit || (isPhilosopher && evaluation.expandedFeedback != null)
-    
-    val feedbackToShow = if (isEffectivelyUnlocked) {
-        evaluation.expandedFeedback ?: evaluation.feedback
-    } else {
-        val baseFeedback = evaluation.feedback
-        val teaserLength = (baseFeedback.length * 0.45).toInt().coerceAtLeast(20)
-        if (baseFeedback.length > teaserLength) {
-            val lastSpace = baseFeedback.take(teaserLength).lastIndexOf(' ')
-            if (lastSpace > 0) baseFeedback.take(lastSpace) + "..." else baseFeedback.take(teaserLength) + "..."
-        } else {
-            baseFeedback
-        }
-    }
-
+    val feedbackToShow = evaluation.feedback
     val primaryGold = Color(0xFFFFD700)
     val backgroundDark = Color(0xFF0F0F0F)
     val surfaceDark = Color(0xFF1A1A1A)
@@ -156,43 +134,15 @@ fun Results(
                         letterSpacing = 2.sp,
                         fontWeight = FontWeight.Bold
                     )
-                    
-                    val canExpand = submission.playmode == "PRACTICE" || submission.playmode == "RANKED" || isPhilosopher
-                    
-                    if (!isEffectivelyUnlocked && canExpand) {
-                        Button(
-                            onClick = onUnlockFeedback,
-                            enabled = !isUnlockingFeedback,
-                            shape = RoundedCornerShape(10.dp),
-                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black, disabledContainerColor = Color.White.copy(alpha = 0.1f)),
-                            modifier = Modifier.height(36.dp)
-                        ) {
-                            Text(
-                                text = if (isUnlockingFeedback) "Decrypting..."
-                                       else if (isPhilosopher) "Expand • FREE"
-                                       else "Expand • ${EconomyConfig.EXPAND_FEEDBACK_COST}",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Black
-                            )
-                        }
-                    } else if (isEffectivelyUnlocked) {
-                        Box(
-                            modifier = Modifier.clip(RoundedCornerShape(6.dp)).background(primaryGold.copy(alpha = 0.1f)).padding(horizontal = 8.dp, vertical = 4.dp)
-                        ) {
-                            Text("Decrypted", color = primaryGold, fontSize = 9.sp, fontWeight = FontWeight.Bold)
-                        }
-                    }
                 }
 
                 Spacer(modifier = Modifier.height(20.dp))
 
                 Text(
                     text = feedbackToShow,
-                    color = if (isEffectivelyUnlocked) Color.White else Color.LightGray,
+                    color = Color.White,
                     style = MaterialTheme.typography.bodyLarge,
-                    lineHeight = 26.sp,
-                    fontStyle = if (isEffectivelyUnlocked) androidx.compose.ui.text.font.FontStyle.Normal else androidx.compose.ui.text.font.FontStyle.Italic
+                    lineHeight = 26.sp
                 )
             }
         }
@@ -359,12 +309,9 @@ fun ResultsPreview() {
     Inkr8Theme {
         Results(
             submission = previewSubmission,
-            isUnlockingFeedback = false,
             isPlaced = false,
-            onUnlockFeedback = {},
             onNavigateBack = {},
-            onNavigateToPractice = {},
-            isPhilosopher = false
+            onNavigateToPractice = {}
         )
     }
 }

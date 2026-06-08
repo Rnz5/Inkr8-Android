@@ -170,29 +170,4 @@ class FirestoreSubmissionRepository() {
                 }
             }
     }
-
-    fun unlockFeedbackExpansion(
-        submissionId: String,
-        skipMeritCost: Boolean = false,
-        onSuccess: (Long) -> Unit,
-        onError: (Exception) -> Unit
-    ) {
-        val functions = Firebase.functions
-        val data = hashMapOf(
-            "submissionId" to submissionId,
-            "skipMeritCost" to skipMeritCost
-        )
-
-        functions
-            .getHttpsCallable("unlockFeedbackExpansion")
-            .call(data)
-            .addOnSuccessListener { result ->
-                val map = result.data as? Map<*, *>
-                val cost = (map?.get("cost") as? Number)?.toInt() ?: 0
-                onSuccess(cost.toLong())
-            }
-            .addOnFailureListener { e ->
-                onError(Exception(e.message ?: "Failed to unlock feedback"))
-            }
-    }
 }

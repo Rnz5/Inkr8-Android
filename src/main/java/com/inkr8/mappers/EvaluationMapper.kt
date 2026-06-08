@@ -9,11 +9,12 @@ fun FirestoreEvaluation.toDomain(): Evaluation {
         submissionId = submissionId ?: "",
         finalScore = finalScore,
         feedback = feedback,
-        isExpanded = expanded,
         resultStatus = SubmissionStatus.valueOf(
             resultStatus.ifBlank { "PENDING" }
         ),
-        meritEarned = meritEarned.toLong()
+        meritEarned = meritEarned,
+        ratingChange = ratingChange,
+        rankLeaderboard = rankLeaderboard.toInt().takeIf { it > 0 }
     )
 }
 
@@ -22,8 +23,9 @@ fun Evaluation.toFirestore(): FirestoreEvaluation {
         submissionId = submissionId,
         finalScore = finalScore,
         feedback = feedback,
-        expanded = isExpanded,
         resultStatus = resultStatus.name,
-        meritEarned = meritEarned.toLong()
+        meritEarned = meritEarned,
+        ratingChange = ratingChange,
+        rankLeaderboard = rankLeaderboard?.toLong() ?: 0L
     )
 }

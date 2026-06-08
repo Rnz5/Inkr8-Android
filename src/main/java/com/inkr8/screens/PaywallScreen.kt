@@ -59,7 +59,6 @@ fun PaywallScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             BenefitItem("No Ads")
-            BenefitItem("Expanded Feedback — always unlocked")
             BenefitItem("Example Sentence — free")
             BenefitItem("Widget Fee — free")
             BenefitItem("Profile Glow + Badge")
