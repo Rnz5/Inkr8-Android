@@ -1,45 +1,22 @@
 package com.inkr8.screens
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -72,59 +49,86 @@ fun TournamentResultsScreen(
     onTipUser: (recipientId: String, amount: Long) -> Unit,
     onOpenUserProfile: (String) -> Unit
 ){
+    val primaryGold = Color(0xFFFFD700)
+    val backgroundDark = Color(0xFF0F0F0F)
+    val surfaceDark = Color(0xFF1A1A1A)
+
     Column(
-        modifier = Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(12.dp)
+        modifier = Modifier
+            .fillMaxSize()
+            .background(backgroundDark)
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .padding(horizontal = 20.dp, vertical = 12.dp)
     ) {
-        Button(onClick = onNavigateBack) {
-            Text("Back")
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            OutlinedButton(
+                onClick = onNavigateBack,
+                modifier = Modifier.height(40.dp),
+                shape = RoundedCornerShape(12.dp),
+                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.15f)),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+                contentPadding = PaddingValues(horizontal = 16.dp)
+            ) {
+                Text("Back", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+            }
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = tournament.title.ifBlank { "Tournament Results" },
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold
+            text = "Final Authority Report",
+            color = Color.Gray,
+            style = MaterialTheme.typography.labelSmall,
+            letterSpacing = 2.sp,
+            fontWeight = FontWeight.Black
         )
 
         Text(
-            text = "Final Rankings",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.primary
+            text = tournament.title.ifBlank { "Arena Archive" }.uppercase(),
+            color = Color.White,
+            fontSize = 28.sp,
+            fontWeight = FontWeight.Black,
+            letterSpacing = (-0.5).sp,
+            modifier = Modifier.padding(top = 4.dp)
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
         Card(
-            modifier = Modifier.fillMaxSize(),
-            shape = RoundedCornerShape(22.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            modifier = Modifier.fillMaxSize().padding(bottom = 16.dp),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = surfaceDark),
+            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.05f))
         ) {
             if (isLoading) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator()
+                    CircularProgressIndicator(color = primaryGold)
                 }
             } else if (leaderboard.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("No leaderboard data yet.")
+                    Text("NO DATA LOGGED FOR THIS SESSION", color = Color.DarkGray, fontWeight = FontWeight.Black, fontSize = 12.sp)
                 }
             } else {
                 Column(
-                    modifier = Modifier.fillMaxSize().padding(16.dp)
+                    modifier = Modifier.fillMaxSize().padding(20.dp)
                 ) {
                     ResultsHeader()
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        contentPadding = PaddingValues(bottom = 20.dp)
                     ) {
                         itemsIndexed(
                             items = leaderboard,
@@ -136,7 +140,8 @@ fun TournamentResultsScreen(
                                 entry = entry,
                                 currentUserId = currentUserId,
                                 onTipUser = onTipUser,
-                                onOpenUserProfile = onOpenUserProfile
+                                onOpenUserProfile = onOpenUserProfile,
+                                primaryGold = primaryGold
                             )
                         }
                     }
@@ -150,40 +155,46 @@ fun TournamentResultsScreen(
 private fun ResultsHeader() {
     Column {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Place",
-                modifier = Modifier.width(34.dp),
-                fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.labelMedium
+                text = "RANK",
+                modifier = Modifier.width(45.dp),
+                fontWeight = FontWeight.Black,
+                fontSize = 9.sp,
+                color = Color.Gray,
+                letterSpacing = 1.sp
             )
-            Spacer(modifier = Modifier.width(6.dp))
             Text(
-                text = "Player",
+                text = "COMPETITOR",
                 modifier = Modifier.weight(1f),
-                fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.labelMedium
-            )
-            Spacer(modifier = Modifier.width(6.dp))
-            Text(
-                text = "Score",
-                modifier = Modifier.width(56.dp),
-                fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.labelMedium
+                fontWeight = FontWeight.Black,
+                fontSize = 9.sp,
+                color = Color.Gray,
+                letterSpacing = 1.sp
             )
             Text(
-                text = "Merit",
-                modifier = Modifier.width(50.dp),
-                fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.labelMedium
+                text = "SCORE",
+                modifier = Modifier.width(60.dp),
+                fontWeight = FontWeight.Black,
+                fontSize = 9.sp,
+                color = Color.Gray,
+                letterSpacing = 1.sp
             )
-            Spacer(modifier = Modifier.width(46.dp))
+            Text(
+                text = "MERIT",
+                modifier = Modifier.width(55.dp),
+                fontWeight = FontWeight.Black,
+                fontSize = 9.sp,
+                color = Color.Gray,
+                letterSpacing = 1.sp
+            )
+            Spacer(modifier = Modifier.width(48.dp))
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
-        HorizontalDivider()
+        Spacer(modifier = Modifier.height(12.dp))
+        HorizontalDivider(color = Color.White.copy(alpha = 0.05f))
     }
 }
 
@@ -195,7 +206,8 @@ private fun TournamentResultRow(
     entry: TournamentLeaderboardEntry,
     currentUserId: String,
     onTipUser: (recipientId: String, amount: Long) -> Unit,
-    onOpenUserProfile: (String) -> Unit
+    onOpenUserProfile: (String) -> Unit,
+    primaryGold: Color
 ) {
     val formatter = NumberFormat.getNumberInstance(Locale.US)
 
@@ -207,11 +219,11 @@ private fun TournamentResultRow(
     var showSubmissionSheet by remember { mutableStateOf(false) }
     var showTipDialog by remember { mutableStateOf(false) }
 
-    val cardColor = when (placement) {
-        1 -> MaterialTheme.colorScheme.primaryContainer
-        2 -> MaterialTheme.colorScheme.secondaryContainer
-        3 -> MaterialTheme.colorScheme.tertiaryContainer
-        else -> MaterialTheme.colorScheme.surface
+    val placeColor = when (placement) {
+        1 -> primaryGold
+        2 -> Color.LightGray
+        3 -> Color(0xFFCD7F32)
+        else -> Color.Gray
     }
 
     if (showSubmissionSheet) {
@@ -224,7 +236,8 @@ private fun TournamentResultRow(
                 showSubmissionSheet = false
                 onOpenUserProfile(entry.submission.authorId)
             },
-            onTip = { amount -> onTipUser(entry.submission.authorId, amount) }
+            onTip = { amount -> onTipUser(entry.submission.authorId, amount) },
+            primaryGold = primaryGold
         )
     }
 
@@ -239,79 +252,83 @@ private fun TournamentResultRow(
         )
     }
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = cardColor)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(if (isSelf) Color.White.copy(alpha = 0.05f) else Color.Transparent)
+            .padding(horizontal = 4.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
+        Text(
+            text = FormatUtils.formatPlace(placement),
+            modifier = Modifier.width(45.dp),
+            fontWeight = FontWeight.Black,
+            color = placeColor,
+            fontSize = 13.sp
+        )
+
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 10.dp),
+            modifier = Modifier.weight(1f).clip(RoundedCornerShape(10.dp)).clickable { showSubmissionSheet = true }.padding(horizontal = 2.dp, vertical = 2.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            AsyncImage(
+                model = entry.user?.profileImageURL?.ifEmpty { R.drawable.pfpexample } ?: R.drawable.pfpexample,
+                contentDescription = null,
+                modifier = Modifier.size(28.dp).clip(CircleShape).border(1.dp, Color.White.copy(alpha = 0.1f), CircleShape),
+                contentScale = ContentScale.Crop,
+                error = painterResource(id = R.drawable.pfpexample),
+                placeholder = painterResource(id = R.drawable.pfpexample)
+            )
+
+            Spacer(modifier = Modifier.width(10.dp))
+
             Text(
-                text = FormatUtils.formatPlace(placement),
-                modifier = Modifier.width(34.dp),
+                text = displayName,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                color = Color.White,
                 fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.bodyMedium
+                fontSize = 13.sp,
+                modifier = Modifier.weight(1f)
             )
+        }
 
-            Spacer(modifier = Modifier.width(6.dp))
+        Text(
+            text = String.format(Locale.US, "%.1f", finalScore),
+            modifier = Modifier.width(60.dp),
+            color = Color.White,
+            fontWeight = FontWeight.Bold,
+            fontSize = 13.sp
+        )
 
-            Row(
-                modifier = Modifier.weight(1f).clip(RoundedCornerShape(10.dp)).clickable { showSubmissionSheet = true }.padding(horizontal = 2.dp, vertical = 2.dp),
-                verticalAlignment = Alignment.CenterVertically
+        Text(
+            text = formatter.format(meritEarned),
+            modifier = Modifier.width(55.dp),
+            color = primaryGold,
+            fontWeight = FontWeight.Black,
+            fontSize = 13.sp
+        )
+
+        if (!isSelf) {
+            Box(
+                modifier = Modifier
+                    .padding(start = 8.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(8.dp))
+                    .clickable { showTipDialog = true }
+                    .padding(horizontal = 10.dp, vertical = 6.dp)
             ) {
-                AsyncImage(
-                    model = entry.user?.profileImageURL?.ifEmpty { R.drawable.pfpexample } ?: R.drawable.pfpexample,
-                    contentDescription = null,
-                    modifier = Modifier.size(24.dp).clip(CircleShape),
-                    contentScale = ContentScale.Crop,
-                    error = painterResource(id = R.drawable.pfpexample),
-                    placeholder = painterResource(id = R.drawable.pfpexample)
-                )
-
-                Spacer(modifier = Modifier.width(6.dp))
-
                 Text(
-                    text = displayName,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.weight(1f)
+                    text = "TIP",
+                    color = Color.White,
+                    fontWeight = FontWeight.Black,
+                    fontSize = 10.sp,
+                    letterSpacing = 1.sp
                 )
             }
-
-            Spacer(modifier = Modifier.width(6.dp))
-
-            Text(
-                text = String.format(Locale.US, "%.2f%%", finalScore),
-                modifier = Modifier.width(56.dp),
-                style = MaterialTheme.typography.bodySmall,
-                fontWeight = FontWeight.Medium
-            )
-
-            Text(
-                text = formatter.format(meritEarned),
-                modifier = Modifier.width(50.dp),
-                style = MaterialTheme.typography.bodySmall,
-                fontWeight = FontWeight.Bold
-            )
-
-            if (!isSelf) {
-                Spacer(modifier = Modifier.width(6.dp))
-
-                Button(
-                    onClick = { showTipDialog = true },
-                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
-                    modifier = Modifier.height(28.dp),
-                    shape = RoundedCornerShape(10.dp)
-                ) {
-                    Text(
-                        text = "Tip",
-                        style = MaterialTheme.typography.labelSmall
-                    )
-                }
-            }
+        } else {
+            Spacer(modifier = Modifier.width(48.dp))
         }
     }
 }
@@ -324,184 +341,128 @@ private fun TournamentSubmissionBottomSheet(
     isSelf: Boolean,
     onDismiss: () -> Unit,
     onOpenProfile: () -> Unit,
-    onTip: (Long) -> Unit
+    onTip: (Long) -> Unit,
+    primaryGold: Color
 ) {
     val submission = entry.submission
     val evaluation = submission.evaluation
     val displayName = entry.user?.name?.ifBlank { null } ?: submission.authorId
 
-    val scrollState = rememberScrollState()
-
     ModalBottomSheet(
-        onDismissRequest = onDismiss
+        onDismissRequest = onDismiss,
+        containerColor = Color(0xFF1A1A1A),
+        scrimColor = Color.Black.copy(alpha = 0.7f)
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth().verticalScroll(scrollState).padding(horizontal = 16.dp, vertical = 8.dp).navigationBarsPadding()
+            modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp, vertical = 8.dp).navigationBarsPadding()
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).clickable { onOpenProfile() }.padding(vertical = 6.dp),
+                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).clickable { onOpenProfile() }.padding(vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 AsyncImage(
                     model = entry.user?.profileImageURL?.ifEmpty { R.drawable.pfpexample } ?: R.drawable.pfpexample,
                     contentDescription = null,
-                    modifier = Modifier.size(42.dp).clip(CircleShape),
+                    modifier = Modifier.size(48.dp).clip(CircleShape).border(1.dp, Color.White.copy(alpha = 0.1f), CircleShape),
                     contentScale = ContentScale.Crop,
                     error = painterResource(id = R.drawable.pfpexample),
                     placeholder = painterResource(id = R.drawable.pfpexample)
                 )
 
-                Spacer(modifier = Modifier.width(10.dp))
+                Spacer(modifier = Modifier.width(16.dp))
 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = displayName,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        color = Color.White,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Black
                     )
                     Text(
-                        text = "Tap to open profile",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary
+                        text = "View Competitor Dossier",
+                        color = primaryGold,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.3f)),
+                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.05f))
             ) {
-                Column(
-                    modifier = Modifier.padding(14.dp)
-                ) {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    Text(
+                        text = "TRANSMITTED CONTENT",
+                        color = Color.Gray,
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = 1.sp
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
                     Text(
                         text = submission.content,
-                        style = MaterialTheme.typography.bodyLarge
+                        color = Color.White,
+                        fontSize = 15.sp,
+                        lineHeight = 24.sp
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-            Card(
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Column(
-                    modifier = Modifier.padding(14.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Text(
-                        text = "Submission Details",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        InfoMiniBlock(
-                            label = "Score",
-                            value = String.format(Locale.US, "%.2f%%", evaluation?.finalScore ?: 0.0)
-                        )
-                        InfoMiniBlock(
-                            label = "Merit",
-                            value = (evaluation?.meritEarned ?: 0L).toString()
-                        )
-                    }
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        InfoMiniBlock(
-                            label = "Characters",
-                            value = submission.characterCount.toString()
-                        )
-                        InfoMiniBlock(
-                            label = "Mode",
-                            value = submission.gamemode
-                        )
-                    }
-
-                    if (tournament.gamemode == "ON_TOPIC") {
-                        HorizontalDivider()
-
-                        Text(
-                            text = "Prompt",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold
-                        )
-
-                        Text(
-                            text = "Theme: ${tournament.themeName ?: "Unknown Theme"}",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-
-                        Text(
-                            text = "Topic: ${tournament.topicName ?: "Unknown Topic"}",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-
-                    if (tournament.requiredWords.isNotEmpty()) {
-                        HorizontalDivider()
-
-                        Text(
-                            text = "Required Words",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold
-                        )
-
-                        RequiredWordsFlow(
-                            requiredWords = tournament.requiredWords,
-                            content = submission.content
-                        )
-                    }
-                }
+                InfoMiniBlock(
+                    label = "ACCURACY",
+                    value = String.format(Locale.US, "%.2f%%", evaluation?.finalScore ?: 0.0),
+                    modifier = Modifier.weight(1f),
+                    primaryGold = primaryGold
+                )
+                InfoMiniBlock(
+                    label = "MERIT EARNED",
+                    value = (evaluation?.meritEarned ?: 0L).toString(),
+                    modifier = Modifier.weight(1f),
+                    primaryGold = primaryGold
+                )
             }
+
+            Spacer(modifier = Modifier.height(24.dp))
 
             if (!isSelf) {
-                Spacer(modifier = Modifier.height(14.dp))
-
-                Card(
+                Text(
+                    text = "REWARD COMPETITOR",
+                    color = Color.Gray,
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = 1.sp
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(18.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Column(
-                        modifier = Modifier.padding(14.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Text(
-                            text = "Send Tip",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    listOf(100L, 250L, 500L).forEach { amount ->
+                        OutlinedButton(
+                            onClick = { onTip(amount) },
+                            modifier = Modifier.weight(1f).height(44.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.1f)),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
                         ) {
-                            listOf(100L, 150L, 200L).forEach { amount ->
-                                Button(
-                                    onClick = { onTip(amount) },
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Text(amount.toString())
-                                }
-                            }
+                            Text(amount.toString(), fontWeight = FontWeight.Black)
                         }
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }
@@ -509,54 +470,24 @@ private fun TournamentSubmissionBottomSheet(
 @Composable
 private fun InfoMiniBlock(
     label: String,
-    value: String
+    value: String,
+    modifier: Modifier = Modifier,
+    primaryGold: Color
 ) {
-    Column(
-        modifier = Modifier.width(120.dp)
-    ) {
+    Column(modifier = modifier) {
         Text(
             text = label,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.primary
+            fontSize = 8.sp,
+            fontWeight = FontWeight.Black,
+            color = Color.Gray,
+            letterSpacing = 1.sp
         )
         Text(
             text = value,
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.Bold
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Black,
+            color = if (label.contains("MERIT")) primaryGold else Color.White
         )
-    }
-}
-
-@Composable
-private fun RequiredWordsFlow(
-    requiredWords: List<String>,
-    content: String
-) {
-    val normalizedContentWords = content.lowercase().split("\\W+".toRegex()).filter { it.isNotBlank() }.toSet()
-
-    Column(
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        requiredWords.chunked(2).forEach { rowWords ->
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                rowWords.forEach { word ->
-                    val used = normalizedContentWords.contains(word.lowercase())
-
-                    FilterChip(
-                        selected = used,
-                        onClick = {},
-                        label = {
-                            Text(
-                                text = if (used) "$word ✓" else word
-                            )
-                        },
-                        enabled = false
-                    )
-                }
-            }
-        }
     }
 }
 
@@ -568,32 +499,41 @@ private fun TipAmountDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Tip $recipientName") },
+        containerColor = Color(0xFF1A1A1A),
+        title = { Text("Reward $recipientName", color = Color.White, fontWeight = FontWeight.Black) },
         text = {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
-            ) {
-                Button(onClick = { onSelectAmount(100L) }) {
-                    Text("100")
-                }
-                Button(onClick = { onSelectAmount(150L) }) {
-                    Text("150")
-                }
-                Button(onClick = { onSelectAmount(200L) }) {
-                    Text("200")
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text("Select an amount of Merit to transfer from your balance.", color = Color.Gray, fontSize = 14.sp)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    listOf(100L, 250L, 500L).forEach { amount ->
+                        Button(
+                            onClick = { onSelectAmount(amount) },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black)
+                        ) {
+                            Text(amount.toString(), fontWeight = FontWeight.Black)
+                        }
+                    }
                 }
             }
         },
         confirmButton = {},
-        dismissButton = {}
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("CANCEL", color = Color.Gray, fontWeight = FontWeight.Bold)
+            }
+        }
     )
 }
 
 private val previewSubmission1 = Submissions(
     id = "sub1",
     authorId = "user1",
-    content = "Preview paragraph",
+    content = "The structural integrity of the output remains within parameters.",
     evaluation = Evaluation(
         finalScore = 94.25,
         feedback = "Great work",
@@ -606,7 +546,7 @@ private val previewSubmission1 = Submissions(
 private val previewSubmission2 = Submissions(
     id = "sub2",
     authorId = "user2",
-    content = "Preview paragraph",
+    content = "Syntactic variety is the core of linguistic evolution.",
     evaluation = Evaluation(
         finalScore = 89.75,
         feedback = "Strong writing",

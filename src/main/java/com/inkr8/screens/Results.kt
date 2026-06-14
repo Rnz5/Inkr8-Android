@@ -295,7 +295,10 @@ fun Results(
                 shape = RoundedCornerShape(14.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black)
             ) {
-                Text("Practice Again", fontWeight = FontWeight.Black)
+                Text(
+                    text = if (submission.playmode == "RANKED") "Enter Ranked Again" else "Practice Again",
+                    fontWeight = FontWeight.Black
+                )
             }
         }
         

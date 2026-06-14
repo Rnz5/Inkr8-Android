@@ -1,29 +1,17 @@
 package com.inkr8.screens
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,6 +23,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.inkr8.R
 import com.inkr8.data.Evaluation
@@ -67,160 +56,196 @@ fun TournamentDetails(
     val formattedPrizePool = formatter.format(tournament.prizePool)
     val formattedEntryFee = formatter.format(tournament.entranceFee)
 
+    val primaryGold = Color(0xFFFFD700)
+    val backgroundDark = Color(0xFF0F0F0F)
+    val surfaceDark = Color(0xFF1A1A1A)
+
     val rewardPercentages =
         TournamentRewardCalculator.calculateRewardPercentages(tournament.maxPlayers.toInt())
 
     val timeText = when (tournament.status) {
         TournamentStatus.ENROLLING ->
-            "Enrollment ends in ${TimeUtils.formatRemainingTime(tournament.enrollmentDeadline)}"
+            "ENROLLMENT ENDS IN ${TimeUtils.formatRemainingTime(tournament.enrollmentDeadline)}"
         TournamentStatus.ACTIVE ->
-            "Submission ends in ${TimeUtils.formatRemainingTime(tournament.submissionDeadline)}"
+            "SUBMISSION ENDS IN ${TimeUtils.formatRemainingTime(tournament.submissionDeadline)}"
         TournamentStatus.EVALUATING ->
-            "R8 is evaluating the submissions"
+            "R8 IS EVALUATING THE SUBMISSIONS..."
         TournamentStatus.COMPLETED ->
-            "Tournament completed"
+            "TOURNAMENT COMPLETED"
         TournamentStatus.CANCELLED ->
-            "Tournament cancelled"
+            "TOURNAMENT CANCELLED"
     }
 
     Column(
-        modifier = Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(14.dp),
-        verticalArrangement = Arrangement.spacedBy(2.dp)
+        modifier = Modifier
+            .fillMaxSize()
+            .background(backgroundDark)
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 20.dp, vertical = 12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Button(onClick = onNavigateBack) {
-            Text("Back")
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            OutlinedButton(
+                onClick = onNavigateBack,
+                modifier = Modifier.height(40.dp),
+                shape = RoundedCornerShape(12.dp),
+                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.15f)),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+                contentPadding = PaddingValues(horizontal = 16.dp)
+            ) {
+                Text("Back", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+            }
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = tournament.title.ifBlank { "Untitled Tournament" },
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = 2.dp)
+            text = "Arena Specifications",
+            color = Color.Gray,
+            style = MaterialTheme.typography.labelSmall,
+            letterSpacing = 2.sp,
+            fontWeight = FontWeight.Black
         )
 
-        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = tournament.title.ifBlank { "Untitled Arena" }.uppercase(),
+            color = Color.White,
+            fontSize = 28.sp,
+            fontWeight = FontWeight.Black,
+            letterSpacing = (-0.5).sp,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
 
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(20.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            colors = CardDefaults.cardColors(containerColor = surfaceDark),
+            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.05f))
         ) {
             Column(
-                modifier = Modifier.fillMaxSize().padding(14.dp)
+                modifier = Modifier.padding(20.dp)
             ) {
-
                 Text(
-                    text = "Reward Distribution",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    text = "REWARD DISTRIBUTION",
+                    color = Color.Gray,
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = 1.sp
                 )
 
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-                RewardDistributionHeader(showScoreInsteadOfPercent = tournament.status == TournamentStatus.COMPLETED && completedLeaderboard.isNotEmpty())
+                RewardDistributionHeader(
+                    showScoreInsteadOfPercent = tournament.status == TournamentStatus.COMPLETED && completedLeaderboard.isNotEmpty()
+                )
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-                LazyColumn(
-                    modifier = Modifier.fillMaxWidth().height(200.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                Column(
+                    modifier = Modifier.fillMaxWidth().heightIn(max = 240.dp)
                 ) {
-
                     if (tournament.status == TournamentStatus.COMPLETED && completedLeaderboard.isNotEmpty()) {
-
-                        itemsIndexed(completedLeaderboard) { index, entry ->
-
+                        completedLeaderboard.take(10).forEachIndexed { index, entry ->
                             val merit = entry.submission.evaluation?.meritEarned ?: 0L
-
                             val score = entry.submission.evaluation?.finalScore ?: 0.0
-
                             RewardDistributionRow(
                                 place = FormatUtils.formatPlace(index + 1),
                                 merit = formatter.format(merit),
                                 percent = String.format(Locale.US, "%.2f", score),
                                 participant = entry.user?.name?.ifBlank { null } ?: entry.submission.authorId,
-                                onClick = { onOpenSubmission(entry.submission) }
+                                onClick = { onOpenSubmission(entry.submission) },
+                                primaryGold = primaryGold
                             )
                         }
-
                     } else {
-
-                        itemsIndexed(rewardPercentages) { index, percent ->
-
+                        rewardPercentages.take(10).forEachIndexed { index, percent ->
                             val merit = (tournament.prizePool * percent).toLong()
-
                             RewardDistributionRow(
                                 place = FormatUtils.formatPlace(index + 1),
                                 merit = formatter.format(merit),
                                 percent = "${String.format(Locale.US, "%.2f", percent * 100)}%",
                                 participant = "TBD",
-                                onClick = {}
+                                onClick = {},
+                                primaryGold = primaryGold
                             )
                         }
                     }
                 }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                TournamentOverviewSection(
-                    tournament = tournament,
-                    formattedPrizePool = formattedPrizePool,
-                    formattedEntryFee = formattedEntryFee,
-                    timeText = timeText,
-                    onHostClick = onHostClick
-                )
-
-                Spacer(modifier = Modifier.height(6.dp))
-
-                TournamentRequirementsSection(tournament = tournament)
-
-                Spacer(modifier = Modifier.height(6.dp))
-
-                val actionText = when (tournament.status) {
-                    TournamentStatus.ENROLLING -> when {
-                        isEnrolled -> "Already Enrolled"
-                        isEnrolling -> "Enrolling..."
-                        else -> "Enroll - $formattedEntryFee Merit"
-                    }
-
-                    TournamentStatus.ACTIVE -> when {
-                        !isEnrolled -> "Enrollment Closed"
-                        isSubmitted -> "Submission Sent"
-                        else -> "Submit to Tournament"
-                    }
-
-                    TournamentStatus.EVALUATING -> "R8 is Evaluating"
-                    TournamentStatus.COMPLETED -> "View Results"
-                    TournamentStatus.CANCELLED -> "Tournament Cancelled"
-                }
-
-                val actionEnabled = when (tournament.status) {
-                    TournamentStatus.ENROLLING -> !isEnrolled && !isEnrolling
-                    TournamentStatus.ACTIVE -> isEnrolled && !isSubmitted
-                    TournamentStatus.EVALUATING -> false
-                    TournamentStatus.COMPLETED -> true
-                    TournamentStatus.CANCELLED -> false
-                }
-
-                Button(
-                    onClick = {
-                        when (tournament.status) {
-                            TournamentStatus.ENROLLING -> onEnroll()
-                            TournamentStatus.ACTIVE -> onSubmitToTournament()
-                            TournamentStatus.COMPLETED -> onViewResults()
-                            else -> {}
-                        }
-                    },
-                    enabled = actionEnabled,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(actionText)
-                }
             }
         }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        TournamentOverviewSection(
+            tournament = tournament,
+            formattedPrizePool = formattedPrizePool,
+            formattedEntryFee = formattedEntryFee,
+            timeText = timeText,
+            onHostClick = onHostClick,
+            primaryGold = primaryGold,
+            surfaceDark = surfaceDark
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        TournamentRequirementsSection(tournament = tournament, surfaceDark = surfaceDark)
+
+        Spacer(modifier = Modifier.height(48.dp))
+
+        val actionText = when (tournament.status) {
+            TournamentStatus.ENROLLING -> when {
+                isEnrolled -> "ALREADY ENROLLED"
+                isEnrolling -> "ENROLLING..."
+                else -> "ENROLL • $formattedEntryFee MERIT"
+            }
+            TournamentStatus.ACTIVE -> when {
+                !isEnrolled -> "ENROLLMENT CLOSED"
+                isSubmitted -> "SUBMISSION SENT"
+                else -> "SUBMIT ENTRY"
+            }
+            TournamentStatus.EVALUATING -> "R8 IS JUDGING"
+            TournamentStatus.COMPLETED -> "VIEW FINAL RESULTS"
+            TournamentStatus.CANCELLED -> "ARENA DEACTIVATED"
+        }
+
+        val actionEnabled = when (tournament.status) {
+            TournamentStatus.ENROLLING -> !isEnrolled && !isEnrolling
+            TournamentStatus.ACTIVE -> isEnrolled && !isSubmitted
+            TournamentStatus.EVALUATING -> false
+            TournamentStatus.COMPLETED -> true
+            TournamentStatus.CANCELLED -> false
+        }
+
+        Button(
+            onClick = {
+                when (tournament.status) {
+                    TournamentStatus.ENROLLING -> onEnroll()
+                    TournamentStatus.ACTIVE -> onSubmitToTournament()
+                    TournamentStatus.COMPLETED -> onViewResults()
+                    else -> {}
+                }
+            },
+            enabled = actionEnabled,
+            modifier = Modifier.fillMaxWidth().height(56.dp),
+            shape = RoundedCornerShape(14.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color.White,
+                contentColor = Color.Black,
+                disabledContainerColor = Color.White.copy(alpha = 0.1f),
+                disabledContentColor = Color.Gray
+            )
+        ) {
+            Text(actionText, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
+        }
+        
+        Spacer(modifier = Modifier.height(40.dp))
     }
 }
 
@@ -229,82 +254,101 @@ private fun RewardDistributionHeader(
     showScoreInsteadOfPercent: Boolean
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = "PLACE",
-            modifier = Modifier.width(52.dp),
-            fontWeight = FontWeight.Bold,
-            style = MaterialTheme.typography.labelMedium
+            text = "RANK",
+            modifier = Modifier.width(45.dp),
+            fontWeight = FontWeight.Black,
+            fontSize = 9.sp,
+            color = Color.Gray,
+            letterSpacing = 1.sp
         )
         Text(
             text = "MERIT",
-            modifier = Modifier.width(88.dp),
-            fontWeight = FontWeight.Bold,
-            style = MaterialTheme.typography.labelMedium
+            modifier = Modifier.width(75.dp),
+            fontWeight = FontWeight.Black,
+            fontSize = 9.sp,
+            color = Color.Gray,
+            letterSpacing = 1.sp
         )
         Text(
-            text = if (showScoreInsteadOfPercent) "SCORE" else "PERCENT",
-            modifier = Modifier.width(72.dp),
-            fontWeight = FontWeight.Bold,
-            style = MaterialTheme.typography.labelMedium
+            text = if (showScoreInsteadOfPercent) "SCORE" else "SHARE",
+            modifier = Modifier.width(65.dp),
+            fontWeight = FontWeight.Black,
+            fontSize = 9.sp,
+            color = Color.Gray,
+            letterSpacing = 1.sp
         )
         Text(
-            text = "PARTICIPANT",
+            text = "COMPETITOR",
             modifier = Modifier.weight(1f),
-            fontWeight = FontWeight.Bold,
-            style = MaterialTheme.typography.labelMedium
+            fontWeight = FontWeight.Black,
+            fontSize = 9.sp,
+            color = Color.Gray,
+            letterSpacing = 1.sp
         )
     }
 
-    Spacer(modifier = Modifier.height(6.dp))
-    HorizontalDivider()
+    Spacer(modifier = Modifier.height(12.dp))
+    HorizontalDivider(color = Color.White.copy(alpha = 0.05f))
 }
+
 @Composable
 private fun RewardDistributionRow(
     place: String,
     merit: String,
     percent: String,
     participant: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    primaryGold: Color
 ) {
     val placeColor = when (place) {
-        "1st" -> Color(0xFFFFD700)
+        "1st" -> primaryGold
         "2nd" -> Color.LightGray
         "3rd" -> Color(0xFFCD7F32)
-        else -> MaterialTheme.colorScheme.onSurface
+        else -> Color.Gray
     }
 
     Row(
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).clickable(onClick = onClick).padding(vertical = 6.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
+            .clickable(onClick = onClick)
+            .padding(vertical = 10.dp, horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = place,
-            modifier = Modifier.width(52.dp),
+            modifier = Modifier.width(45.dp),
             color = placeColor,
-            fontWeight = if (place == "1st" || place == "2nd" || place == "3rd") {
-                FontWeight.Bold
-            } else {
-                FontWeight.Normal
-            }
+            fontWeight = FontWeight.Black,
+            fontSize = 13.sp
         )
 
         Text(
             text = merit,
-            modifier = Modifier.width(88.dp)
+            modifier = Modifier.width(75.dp),
+            color = Color.White,
+            fontWeight = FontWeight.Bold,
+            fontSize = 13.sp
         )
 
         Text(
             text = percent,
-            modifier = Modifier.width(72.dp)
+            modifier = Modifier.width(65.dp),
+            color = Color.Gray,
+            fontSize = 13.sp
         )
 
         Text(
             text = participant,
             modifier = Modifier.weight(1f),
-            fontStyle = FontStyle.Italic
+            color = if (participant == "TBD") Color.DarkGray else Color.White,
+            fontSize = 13.sp,
+            fontWeight = if (participant == "TBD") FontWeight.Normal else FontWeight.Bold,
+            maxLines = 1
         )
     }
 }
@@ -315,41 +359,65 @@ private fun TournamentOverviewSection(
     formattedPrizePool: String,
     formattedEntryFee: String,
     timeText: String,
-    onHostClick: () -> Unit
+    onHostClick: () -> Unit,
+    primaryGold: Color,
+    surfaceDark: Color
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = surfaceDark),
+        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.05f))
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable(onClick = onHostClick).padding(4.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable(onClick = onHostClick)
             ) {
                 AsyncImage(
                     model = tournament.creatorImageURL.ifEmpty { R.drawable.pfpexample },
-                    contentDescription = "Host profile picture",
-                    modifier = Modifier.size(40.dp).clip(CircleShape),
+                    contentDescription = null,
+                    modifier = Modifier.size(40.dp).clip(CircleShape).border(1.dp, Color.White.copy(alpha = 0.1f), CircleShape),
                     contentScale = ContentScale.Crop,
                     error = painterResource(id = R.drawable.pfpexample),
                     placeholder = painterResource(id = R.drawable.pfpexample)
                 )
 
-                Spacer(modifier = Modifier.width(10.dp))
+                Spacer(modifier = Modifier.width(12.dp))
 
                 Column {
                     Text(
                         text = tournament.creatorName.ifBlank { "Unknown Host" },
-                        fontWeight = FontWeight.Bold
+                        color = Color.White,
+                        fontWeight = FontWeight.Black,
+                        fontSize = 15.sp
                     )
                     Text(
-                        text = tournament.gamemode,
-                        color = MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.bodySmall
+                        text = "Source Authority",
+                        color = Color.DarkGray,
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = 1.sp
+                    )
+                }
+                
+                Spacer(modifier = Modifier.weight(1f))
+                
+                Box(
+                    modifier = Modifier.clip(RoundedCornerShape(6.dp)).border(1.dp, primaryGold.copy(alpha = 0.2f), RoundedCornerShape(6.dp)).padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = tournament.gamemode.replace("_", " "),
+                        color = primaryGold,
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = 1.sp
                     )
                 }
             }
@@ -358,38 +426,28 @@ private fun TournamentOverviewSection(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                OverviewStatBlock(
-                    label = "Prize Pool",
-                    value = formattedPrizePool
-                )
-                OverviewStatBlock(
-                    label = "Entry",
-                    value = "$formattedEntryFee Merit"
-                )
+                OverviewStatBlock(label = "PRIZE POOL", value = formattedPrizePool, color = primaryGold)
+                OverviewStatBlock(label = "ENTRY FEE", value = "$formattedEntryFee Merit", color = Color.White)
             }
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                OverviewStatBlock(
-                    label = "Players",
-                    value = "${tournament.playersCount}/${tournament.maxPlayers}"
-                )
-                OverviewStatBlock(
-                    label = "Minimum",
-                    value = "${tournament.minPlayers}"
-                )
+                OverviewStatBlock(label = "CAPACITY", value = "${tournament.playersCount}/${tournament.maxPlayers}", color = Color.White)
+                OverviewStatBlock(label = "MINIMUM", value = "${tournament.minPlayers}", color = Color.White)
             }
 
-            Box(
-                modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.CenterStart
+            Row(
+                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(Color.Black.copy(alpha = 0.3f)).padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = timeText,
-                    fontStyle = FontStyle.Italic,
-                    style = MaterialTheme.typography.bodyMedium
+                    color = Color.Gray,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = 0.5.sp
                 )
             }
         }
@@ -399,72 +457,79 @@ private fun TournamentOverviewSection(
 @Composable
 fun OverviewStatBlock(
     label: String,
-    value: String
+    value: String,
+    color: Color
 ) {
-    Column(
-        modifier = Modifier.width(140.dp)
-    ) {
+    Column(modifier = Modifier.width(140.dp)) {
         Text(
             text = label,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.primary
+            fontSize = 8.sp,
+            fontWeight = FontWeight.Black,
+            color = Color.Gray,
+            letterSpacing = 1.sp
         )
         Text(
             text = value,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Black,
+            fontSize = 18.sp,
+            color = color
         )
     }
 }
 
 @Composable
 private fun TournamentRequirementsSection(
-    tournament: Tournament
+    tournament: Tournament,
+    surfaceDark: Color
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = surfaceDark),
+        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.05f))
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "Requirements",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold
+                text = "ACCESS REQUIREMENTS",
+                color = Color.Gray,
+                fontSize = 9.sp,
+                fontWeight = FontWeight.Black,
+                letterSpacing = 1.sp
             )
 
-            Text("Status: ${tournament.status.name}")
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                RequirementItem("STATUS", tournament.status.name)
+                
+                tournament.requirements.minRating?.let { RequirementItem("MIN RATING", it.toString()) }
+                tournament.requirements.maxRating?.let { RequirementItem("MAX RATING", it.toString()) }
+                tournament.requirements.minReputation?.let { RequirementItem("MIN REPUTATION", it.toString()) }
+                tournament.requirements.minMerit?.let { RequirementItem("MIN MERIT", it.toString()) }
 
-            tournament.requirements.minRating?.let {
-                Text("Minimum rating: $it")
-            }
-
-            tournament.requirements.maxRating?.let {
-                Text("Maximum rating: $it")
-            }
-
-            tournament.requirements.minReputation?.let {
-                Text("Minimum reputation: $it")
-            }
-
-            tournament.requirements.minMerit?.let {
-                Text("Minimum merit: $it")
-            }
-
-            if (
-                tournament.requirements.minRating == null &&
-                tournament.requirements.maxRating == null &&
-                tournament.requirements.minReputation == null &&
-                tournament.requirements.minMerit == null
-            ) {
-                Text(
-                    text = "No special restrictions",
-                    fontStyle = FontStyle.Italic
-                )
+                if (tournament.requirements.minRating == null &&
+                    tournament.requirements.maxRating == null &&
+                    tournament.requirements.minReputation == null &&
+                    tournament.requirements.minMerit == null) {
+                    Text(
+                        text = "NO SPECIAL RESTRICTIONS ENFORCED",
+                        color = Color.DarkGray,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontStyle = FontStyle.Italic
+                    )
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun RequirementItem(label: String, value: String) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Text(text = label, color = Color.Gray, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+        Text(text = value, color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Black)
     }
 }
 
@@ -551,18 +616,19 @@ private fun previewLeaderboard(): List<TournamentLeaderboardEntry> {
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun TournamentDetailsPreview() {
-
-    TournamentDetails(
-        tournament = previewTournament(),
-        onNavigateBack = {},
-        onEnroll = {},
-        onSubmitToTournament = {},
-        onViewResults = {},
-        onHostClick = {},
-        onOpenSubmission = {},
-        isEnrolled = false,
-        isSubmitted = false,
-        isEnrolling = false,
-        completedLeaderboard = previewLeaderboard() //emptyList()
-    )
+    Inkr8Theme {
+        TournamentDetails(
+            tournament = previewTournament(),
+            onNavigateBack = {},
+            onEnroll = {},
+            onSubmitToTournament = {},
+            onViewResults = {},
+            onHostClick = {},
+            onOpenSubmission = {},
+            isEnrolled = false,
+            isSubmitted = false,
+            isEnrolling = false,
+            completedLeaderboard = previewLeaderboard()
+        )
+    }
 }
