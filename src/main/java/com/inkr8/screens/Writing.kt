@@ -26,6 +26,9 @@ import com.inkr8.evaluation.SubmissionFactory
 import com.inkr8.repository.WordRepository
 import com.inkr8.ui.theme.Inkr8Theme
 import kotlinx.coroutines.launch
+import com.google.firebase.analytics.FirebaseAnalytics
+import androidx.compose.ui.platform.LocalContext
+import com.google.firebase.analytics.logEvent
 
 @Composable
 fun Writing(
@@ -37,6 +40,23 @@ fun Writing(
     onNavigateToResults: () -> Unit
 ) {
     val wordRepository = remember { WordRepository() }
+    val analyticsContext = LocalContext.current
+    val firebaseAnalytics = remember { FirebaseAnalytics.getInstance(analyticsContext) }
+
+    LaunchedEffect(gamemode, playMode) {
+        firebaseAnalytics.logEvent("writing_started") {
+            param("gamemode", when (gamemode) {
+                is StandardWriting -> "STANDARD"
+                is OnTopicWriting -> "ON_TOPIC"
+            })
+            param("playmode", when (playMode) {
+                PlayMode.Practice -> "PRACTICE"
+                PlayMode.Ranked -> "RANKED"
+                is PlayMode.Tournament -> "TOURNAMENT"
+            })
+        }
+    }
+
     var selectedWords by remember { mutableStateOf<List<Words>>(emptyList()) }
     var selectedWordForDialog by remember { mutableStateOf<Words?>(null) }
     var selectedThemeForDialog by remember { mutableStateOf<Theme?>(null) }
@@ -108,7 +128,12 @@ fun Writing(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(
-                    onClick = onNavigateBack,
+                    onClick = {
+                        firebaseAnalytics.logEvent("writing_abandoned") {
+                            param("reason", "back_pressed")
+                        }
+                        onNavigateBack()
+                    },
                     modifier = Modifier.background(Color.White.copy(alpha = 0.05f), CircleShape)
                 ) {
                     Text("←", color = Color.White, fontWeight = FontWeight.Bold)

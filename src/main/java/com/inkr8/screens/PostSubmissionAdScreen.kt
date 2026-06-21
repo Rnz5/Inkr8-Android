@@ -39,6 +39,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
+import com.google.firebase.analytics.FirebaseAnalytics
 import kotlinx.coroutines.delay
 
 @Composable
@@ -48,8 +49,11 @@ fun PostSubmissionAdScreen(
 ) {
     var continueEnabled by remember { mutableStateOf(false) }
     var secondsLeft by remember { mutableIntStateOf(5) }
+    val analyticsContext = LocalContext.current
+    val firebaseAnalytics = remember { FirebaseAnalytics.getInstance(analyticsContext) }
 
     LaunchedEffect(Unit) {
+        firebaseAnalytics.logEvent("ad_shown", null)
         while (secondsLeft > 0) {
             delay(1000)
             secondsLeft--
@@ -78,7 +82,10 @@ fun PostSubmissionAdScreen(
 
         Button(
             onClick = {
-                if (continueEnabled) onContinue()
+                if (continueEnabled) {
+                    firebaseAnalytics.logEvent("ad_dismissed", null)
+                    onContinue()
+                }
             },
             enabled = continueEnabled,
             shape = RoundedCornerShape(14.dp),
@@ -94,7 +101,10 @@ fun PostSubmissionAdScreen(
         Spacer(modifier = Modifier.height(18.dp))
 
         Button(
-            onClick = onGoAdFree,
+            onClick = {
+                firebaseAnalytics.logEvent("paywall_opened", null)
+                onGoAdFree()
+            },
             shape = RoundedCornerShape(14.dp),
             modifier = Modifier.widthIn(min = 190.dp)
         ) {

@@ -13,11 +13,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -25,6 +27,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.analytics.logEvent
 import com.inkr8.R
 import com.inkr8.data.Evaluation
 import com.inkr8.data.Submissions
@@ -33,6 +37,7 @@ import com.inkr8.data.TournamentLeaderboardEntry
 import com.inkr8.data.TournamentStatus
 import com.inkr8.data.Users
 import com.inkr8.economy.TournamentRewardCalculator
+import com.inkr8.ui.theme.Inkr8Theme
 import com.inkr8.utils.FormatUtils
 import com.inkr8.utils.TimeUtils
 import java.text.NumberFormat
@@ -55,6 +60,9 @@ fun TournamentDetails(
     val formatter = NumberFormat.getNumberInstance(Locale.US)
     val formattedPrizePool = formatter.format(tournament.prizePool)
     val formattedEntryFee = formatter.format(tournament.entranceFee)
+
+    val analyticsContext = LocalContext.current
+    val firebaseAnalytics = remember { FirebaseAnalytics.getInstance(analyticsContext) }
 
     val primaryGold = Color(0xFFFFD700)
     val backgroundDark = Color(0xFF0F0F0F)
@@ -226,7 +234,12 @@ fun TournamentDetails(
         Button(
             onClick = {
                 when (tournament.status) {
-                    TournamentStatus.ENROLLING -> onEnroll()
+                    TournamentStatus.ENROLLING -> {
+                        firebaseAnalytics.logEvent("tournament_enrolled") {
+                            param("tournament_id", tournament.id)
+                        }
+                        onEnroll()
+                    }
                     TournamentStatus.ACTIVE -> onSubmitToTournament()
                     TournamentStatus.COMPLETED -> onViewResults()
                     else -> {}

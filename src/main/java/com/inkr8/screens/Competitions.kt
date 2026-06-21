@@ -20,6 +20,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.analytics.logEvent
 import com.inkr8.data.*
 import com.inkr8.economy.EconomyConfig
 import com.inkr8.economy.RankedCostCalculator
@@ -53,6 +55,7 @@ fun Competitions(
     val submissionRepository = remember { FirestoreSubmissionRepository() }
     val userRepository = remember { UserRepository() }
     val context = LocalContext.current
+    val firebaseAnalytics = remember { FirebaseAnalytics.getInstance(context) }
 
     var tournaments by remember { mutableStateOf<List<Tournament>>(emptyList()) }
     var rankedGamemode by remember { mutableStateOf<Gamemode>(StandardWriting) }
@@ -212,6 +215,7 @@ fun Competitions(
                                 Button(
                                     onClick = {
                                         if (isEnteringRanked) return@Button
+                                        firebaseAnalytics.logEvent("ranked_entry_attempted", null)
                                         if (user.merit < entryCost) {
                                             Toast.makeText(context, EconomyConfig.insufficientMerit(), Toast.LENGTH_SHORT).show()
                                             return@Button
@@ -222,6 +226,7 @@ fun Competitions(
                                             action = "ENTER_RANKED",
                                             onSuccess = {
                                                 isEnteringRanked = false
+                                                firebaseAnalytics.logEvent("ranked_entry_success", null)
                                                 onNavigateToWriting(rankedGamemode)
                                             },
                                             onError = { e ->
@@ -396,7 +401,12 @@ fun Competitions(
                         creatorDisplayName = tournament.creatorName.ifBlank {
                             if (tournament.creatorId == "R8") "R8" else "Unknown"
                         },
-                        onClick = { onNavigateToTournamentDetails(tournament) },
+                        onClick = {
+                            firebaseAnalytics.logEvent("tournament_details_viewed") {
+                                param("tournament_id", tournament.id)
+                            }
+                            onNavigateToTournamentDetails(tournament)
+                        },
                         onHostClick = { onNavigateToUserProfile(tournament.creatorId) }
                     )
                 }

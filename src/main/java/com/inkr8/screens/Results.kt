@@ -10,14 +10,19 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.analytics.logEvent
 import com.inkr8.data.Evaluation
 import com.inkr8.data.SubmissionStatus
 import com.inkr8.data.Submissions
@@ -55,6 +60,21 @@ fun Results(
         ?: return Box(modifier = Modifier.fillMaxSize().background(Color(0xFF0F0F0F)), contentAlignment = Alignment.Center) {
             Text("R8 Judging...", color = Color.Gray, letterSpacing = 2.sp, fontWeight = FontWeight.Bold)
         }
+
+    val analyticsContext = LocalContext.current
+    val firebaseAnalytics = remember { FirebaseAnalytics.getInstance(analyticsContext) }
+
+    LaunchedEffect(submission.id) {
+        val scoreBucket = when {
+            evaluation.finalScore >= 80 -> "high"
+            evaluation.finalScore >= 60 -> "mid"
+            else -> "low"
+        }
+        firebaseAnalytics.logEvent("results_viewed") {
+            param("playmode", submission.playmode)
+            param("score_bucket", scoreBucket)
+        }
+    }
 
     val feedbackToShow = evaluation.feedback
     val primaryGold = Color(0xFFFFD700)
