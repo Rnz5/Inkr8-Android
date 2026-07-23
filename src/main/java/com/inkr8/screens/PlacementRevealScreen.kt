@@ -57,6 +57,7 @@ fun PlacementRevealScreen(
         League.NOVELIST -> "After 6 matches, the system has reached a conclusion. You are a Novelist. The system is paying attention."
         League.LAUREATE -> "After 6 matches, the system has reached a conclusion. You are a Laureate. Few reach this. R8 is skeptical it will last."
         League.LUMINARY -> "After 6 matches, the system has reached a conclusion. You are a Luminary. This is rare. Do not waste it."
+        League.PANTHEON -> "After 6 matches, the system has reached a conclusion. You are Pantheon. The pinnacle. The system has nothing left to teach you."
     }
 
     Box(

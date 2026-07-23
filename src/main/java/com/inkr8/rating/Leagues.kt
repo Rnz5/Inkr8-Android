@@ -5,7 +5,8 @@ enum class League(val minRating: Int) {
     AUTHOR(60),
     NOVELIST(90),
     LAUREATE(120),
-    LUMINARY(150);
+    LUMINARY(150),
+    PANTHEON(180);
 
     companion object {
         fun fromRating(rating: Long): League {
@@ -16,6 +17,3 @@ enum class League(val minRating: Int) {
     val displayName: String
         get() = name.lowercase().replaceFirstChar { it.uppercase() }
 }
-
-
-

@@ -14,7 +14,8 @@ fun FirestoreEvaluation.toDomain(): Evaluation {
         ),
         meritEarned = meritEarned,
         ratingChange = ratingChange,
-        rankLeaderboard = rankLeaderboard.toInt().takeIf { it > 0 }
+        rankLeaderboard = rankLeaderboard.toInt().takeIf { it > 0 },
+        isMock = source == "mock"
     )
 }
 
@@ -26,6 +27,7 @@ fun Evaluation.toFirestore(): FirestoreEvaluation {
         resultStatus = resultStatus.name,
         meritEarned = meritEarned,
         ratingChange = ratingChange,
-        rankLeaderboard = rankLeaderboard?.toLong() ?: 0L
+        rankLeaderboard = rankLeaderboard?.toLong() ?: 0L,
+        source = if (isMock) "mock" else "real"
     )
 }

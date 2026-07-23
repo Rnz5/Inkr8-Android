@@ -1,5 +1,6 @@
 package com.inkr8.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -61,6 +62,7 @@ fun Results(
             Text("R8 Judging...", color = Color.Gray, letterSpacing = 2.sp, fontWeight = FontWeight.Bold)
         }
 
+    val context = LocalContext.current
     val analyticsContext = LocalContext.current
     val firebaseAnalytics = remember { FirebaseAnalytics.getInstance(analyticsContext) }
 
@@ -73,6 +75,14 @@ fun Results(
         firebaseAnalytics.logEvent("results_viewed") {
             param("playmode", submission.playmode)
             param("score_bucket", scoreBucket)
+        }
+
+        if (evaluation.isMock) {
+            Toast.makeText(
+                context,
+                "Mock mode: the connection with GPT-4o mini isn't working, try again later",
+                Toast.LENGTH_LONG
+            ).show()
         }
     }
 
@@ -97,10 +107,21 @@ fun Results(
                 letterSpacing = 2.sp,
                 fontWeight = FontWeight.Black
             )
+            
+            val isMock = evaluation.isMock
             Box(
-                modifier = Modifier.clip(CircleShape).background(Color(0xFF4CAF50).copy(alpha = 0.1f)).border(1.dp, Color(0xFF4CAF50).copy(alpha = 0.5f), CircleShape).padding(horizontal = 8.dp, vertical = 2.dp)
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .background((if (isMock) Color.Gray else Color(0xFF4CAF50)).copy(alpha = 0.1f))
+                    .border(1.dp, (if (isMock) Color.Gray else Color(0xFF4CAF50)).copy(alpha = 0.5f), CircleShape)
+                    .padding(horizontal = 8.dp, vertical = 2.dp)
             ) {
-                Text("Synced", color = Color(0xFF4CAF50), fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                Text(
+                    text = if (isMock) "Offline Mode" else "Synced",
+                    color = if (isMock) Color.Gray else Color(0xFF4CAF50),
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
 
@@ -148,7 +169,7 @@ fun Results(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "R8 Breakdown",
+                        text = if (evaluation.isMock) "Mock Breakdown" else "R8 Breakdown",
                         color = Color.Gray,
                         style = MaterialTheme.typography.labelSmall,
                         letterSpacing = 2.sp,

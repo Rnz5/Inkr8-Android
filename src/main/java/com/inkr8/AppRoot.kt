@@ -12,13 +12,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.inkr8.data.*
-import com.inkr8.repository.*
 import com.inkr8.screens.*
-import com.inkr8.economy.*
 import com.inkr8.rating.*
-import kotlinx.coroutines.delay
+import com.inkr8.viewmodel.AppViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 
+@Suppress("UNCHECKED_CAST")
+class AppViewModelFactory(private val initialUser: Users) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        return AppViewModel(initialUser) as T
+    }
+}
 
 @Composable
 fun AppRoot(
@@ -26,224 +33,93 @@ fun AppRoot(
     googleLauncher: androidx.activity.result.ActivityResultLauncher<android.content.Intent>,
     onSessionEnded: () -> Unit
 ) {
-    var currentUser by remember { mutableStateOf(initialUser) }
-    var previousUserIsPlaced by remember { mutableStateOf(initialUser.isPlaced) }
+    val viewModel: AppViewModel = viewModel(
+        factory = AppViewModelFactory(initialUser)
+    )
+    
     val context = LocalContext.current
-    var pantheonPosition by remember { mutableStateOf<Int?>(null) }
-    val submissionRepository = remember { FirestoreSubmissionRepository() }
-    val tournamentRepository = remember { FirestoreTournamentRepository() }
-    val userRepository = remember { UserRepository() }
-    var currentGamemode by remember { mutableStateOf<Gamemode?>(null) }
-    var currentPlayMode by remember { mutableStateOf<PlayMode>(PlayMode.Practice) }
-    var selectedTournament by remember { mutableStateOf<Tournament?>(null) }
-    var currentScreen by remember { mutableStateOf(Screen.home) }
-    var selectedProfileUserId by remember { mutableStateOf<String?>(null) }
-    var activeTournamentId by remember { mutableStateOf<String?>(null) }
-    var latestSubmission by remember { mutableStateOf<Submissions?>(null) }
-    var submissionAdCounter by remember { mutableIntStateOf(0) }
-    var pendingNavigationAfterAd by remember { mutableStateOf<Screen?>(null) }
-    var pagerInitialPage by remember { mutableIntStateOf(1) }
+    val activity = LocalActivity.current
 
-    var allSubmissions by remember { mutableStateOf<List<Submissions>>(emptyList()) }
-    var isLoadingSubmissions by remember { mutableStateOf(true) }
-
-    DisposableEffect(currentUser.id) {
-        isLoadingSubmissions = true
-        val registration = submissionRepository.listenToAllSubmissions(
-            authorId = currentUser.id,
-            onUpdate = { updatedSubmissions ->
-                allSubmissions = updatedSubmissions
-                isLoadingSubmissions = false
-            },
-            onError = { error ->
-                error.printStackTrace()
-                isLoadingSubmissions = false
-            }
-        )
-        onDispose {
-            registration.remove()
-        }
-    }
-
-    LaunchedEffect(currentUser.id, currentUser.rating) {
-        if (currentUser.rating >= PantheonManager.MIN_RATING - 20) {
-            userRepository.getTop100Users { top100 ->
-                val (isPantheon, position) =
-                    PantheonManager.checkPantheonStatus(currentUser, top100)
-
-                pantheonPosition = if (isPantheon) position else null
-            }
-        } else {
-            pantheonPosition = null
-        }
-    }
-
-    when(currentScreen) {
+    when(viewModel.currentScreen) {
         Screen.home -> MainPagerScreen(
-            user = currentUser,
-            pantheonPosition = pantheonPosition,
-            initialPage = pagerInitialPage,
-            onNavigateToProfile = {
-                currentScreen = Screen.profile
-            },
-
-            onNavigateToLeaderboard = {
-                currentScreen = Screen.leaderboard
-            },
-
+            user = viewModel.currentUser,
+            pantheonPosition = viewModel.pantheonPosition,
+            initialPage = viewModel.pagerInitialPage,
+            onNavigateToProfile = { viewModel.navigateTo(Screen.profile) },
+            onNavigateToLeaderboard = { viewModel.navigateTo(Screen.leaderboard) },
             onNavigateToWriting = { gamemode, playMode, tournament ->
-                currentGamemode = gamemode
-                currentPlayMode = playMode
-                selectedTournament = tournament
-                latestSubmission = null
-                activeTournamentId = tournament?.id
-                currentScreen = Screen.writing
+                viewModel.startWriting(gamemode, playMode, tournament)
             },
             onNavigateToTournamentDetails = { tournament ->
-                selectedTournament = tournament
-                currentScreen = Screen.tournamentDetails
+                viewModel.selectedTournament = tournament
+                viewModel.navigateTo(Screen.tournamentDetails)
             },
             onNavigateToUserProfile = { userId ->
-                selectedProfileUserId = userId
-                currentScreen = Screen.userProfile
+                viewModel.loadViewedUserProfile(userId)
+                viewModel.navigateTo(Screen.userProfile)
             },
-            onNavigateToCreateTournament = {
-                currentScreen = Screen.createTournament
-            }
+            onNavigateToCreateTournament = { viewModel.navigateTo(Screen.createTournament) }
         )
+        
         Screen.practice -> {
-            pagerInitialPage = 0
-            currentScreen = Screen.home
+            viewModel.navigateTo(Screen.home, page = 0)
         }
 
         Screen.competitions -> {
-            pagerInitialPage = 2
-            currentScreen = Screen.home
+            viewModel.navigateTo(Screen.home, page = 2)
         }
+
         Screen.writing -> Writing(
-            gamemode = currentGamemode ?: StandardWriting,
-            playMode = currentPlayMode,
-            tournamentContext = if (currentPlayMode is PlayMode.Tournament) selectedTournament else null,
-            onAddSubmission = { submission: Submissions ->
-                val submissionWithAuthor = submission.copy(
-                    authorId = currentUser.id
-                )
-
-                val finalSubmission = submissionWithAuthor.copy(
-                    status = SubmissionStatus.PENDING,
-                    evaluation = null
-                )
-
-                val isTournament = finalSubmission.playmode == "TOURNAMENT" && activeTournamentId != null
-
-                if (isTournament) {
-                    tournamentRepository.submitToTournament(
-                        tournamentId = activeTournamentId!!,
-                        userId = currentUser.id,
-                        submission = finalSubmission,
-                        onSuccess = {
-                            Toast.makeText(
-                                context,
-                                "Tournament submission sent",
-                                Toast.LENGTH_SHORT
-                            ).show()
-
-                            userRepository.getUserById(currentUser.id) { updatedUser ->
-                                updatedUser?.let { currentUser = it }
-                            }
-
-                            currentScreen = Screen.tournamentDetails
-                        },
-                        onError = { e: Exception ->
-                            Toast.makeText(
-                                context,
-                                e.message ?: "Failed to submit to tournament",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                            e.printStackTrace()
-                        }
-                    )
-                } else {
-                    submissionRepository.addSubmission(
-                        submission = finalSubmission,
-                        onSuccess = {
-                            userRepository.getUserById(currentUser.id) { updatedUser ->
-                                updatedUser?.let { currentUser = it }
-                            }
-
-                            currentScreen = Screen.loading
-                        },
-                        onError = { e: Exception ->
-                            userRepository.finishRankedSession(currentUser.id)
-                            e.printStackTrace()
-                        }
-                    )
+            gamemode = viewModel.currentGamemode ?: StandardWriting,
+            playMode = viewModel.currentPlayMode,
+            tournamentContext = if (viewModel.currentPlayMode is PlayMode.Tournament) viewModel.selectedTournament else null,
+            onAddSubmission = { submission ->
+                viewModel.submitWriting(submission) { error ->
+                    Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
                 }
             },
             onNavigateBack = {
-                currentScreen = if (activeTournamentId != null && currentPlayMode is PlayMode.Tournament) {
-                    Screen.tournamentDetails
+                if (viewModel.activeTournamentId != null && viewModel.currentPlayMode is PlayMode.Tournament) {
+                    viewModel.navigateTo(Screen.tournamentDetails)
                 } else {
-                    pagerInitialPage = 1
-                    Screen.home
+                    viewModel.navigateTo(Screen.home, page = 1)
                 }
             },
-            onNavigateToResults = { currentScreen = Screen.results }
+            onNavigateToResults = { viewModel.navigateTo(Screen.results) }
         )
-        Screen.submissions -> {
-            SubmissionsScreen(
-                user = currentUser,
-                submissions = allSubmissions,
-                isLoading = isLoadingSubmissions,
-                onNavigateToProfile = { currentScreen = Screen.profile },
-                onSaveSubmission = { submissionId ->
-                    submissionRepository.saveSubmission(
-                        submissionId = submissionId,
-                        onSuccess = {
-                            allSubmissions = allSubmissions.map {
-                                if (it.id == submissionId) it.copy(isSaved = true) else it 
-                            }
-                            
-                            userRepository.getUserById(currentUser.id) { updatedUser ->
-                                updatedUser?.let { currentUser = it }
-                            }
-                        },
-                        onError = { e ->
-                            Toast.makeText(context, e.message ?: "Failed to save", Toast.LENGTH_SHORT).show()
-                        }
-                    )
+
+        Screen.submissions -> SubmissionsScreen(
+            user = viewModel.currentUser,
+            submissions = viewModel.allSubmissions,
+            isLoading = viewModel.isLoadingSubmissions,
+            onNavigateToProfile = { viewModel.navigateTo(Screen.profile) },
+            onSaveSubmission = { submissionId ->
+                viewModel.saveSubmission(submissionId) { error ->
+                    Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
                 }
-            )
-        }
-        Screen.savedSubmissions -> {
-            SavedSubmissionsScreen(
-                savedSubmissions = allSubmissions.filter { it.isSaved },
-                isLoading = isLoadingSubmissions,
-                onNavigateBack = { currentScreen = Screen.profile },
-                onDeleteSubmission = { submissionId ->
-                    submissionRepository.deleteSubmission(
-                        submissionId = submissionId,
-                        onSuccess = {
-                            allSubmissions = allSubmissions.filter { it.id != submissionId }
-                            Toast.makeText(context, "Entry Dissolved", Toast.LENGTH_SHORT).show()
-                        },
-                        onError = { e ->
-                            Toast.makeText(context, e.message ?: "Failed to dissolve", Toast.LENGTH_SHORT).show()
-                        }
-                    )
+            }
+        )
+
+        Screen.savedSubmissions -> SavedSubmissionsScreen(
+            savedSubmissions = viewModel.allSubmissions.filter { it.isSaved },
+            isLoading = viewModel.isLoadingSubmissions,
+            onNavigateBack = { viewModel.navigateTo(Screen.profile) },
+            onDeleteSubmission = { submissionId ->
+                viewModel.deleteSubmission(submissionId, {
+                    Toast.makeText(context, "Entry Dissolved", Toast.LENGTH_SHORT).show()
+                }) { error ->
+                    Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
                 }
-            )
-        }
+            }
+        )
+
         Screen.profile -> Profile(
-            user = currentUser,
+            user = viewModel.currentUser,
             isOwner = true,
-            pantheonPosition = pantheonPosition,
-            onNavigateBack = { 
-                pagerInitialPage = 1
-                currentScreen = Screen.home 
-            },
-            onNavigateToSubmissions = { currentScreen = Screen.submissions },
-            onNavigateToSavedSubmissions = { currentScreen = Screen.savedSubmissions },
+            pantheonPosition = viewModel.pantheonPosition,
+            onNavigateBack = { viewModel.navigateTo(Screen.home, page = 1) },
+            onNavigateToSubmissions = { viewModel.navigateTo(Screen.submissions) },
+            onNavigateToSavedSubmissions = { viewModel.navigateTo(Screen.savedSubmissions) },
             onLinkGoogle = {
                 val signInIntent = AuthManager.getGoogleSignInIntent()
                 googleLauncher.launch(signInIntent)
@@ -253,101 +129,47 @@ fun AppRoot(
                 onSessionEnded()
             },
             onDeleteAccount = {
-                userRepository.deleteAccount(
-                    userId = currentUser.id,
-                    onSuccess = {
-                        AuthManager.signOut()
-                        onSessionEnded()
-                    },
-                    onError = { e ->
-                        Toast.makeText(context, e.message, Toast.LENGTH_SHORT).show()
-                    }
-                )
+                viewModel.deleteAccount({
+                    AuthManager.signOut()
+                    onSessionEnded()
+                }) { error ->
+                    Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+                }
             },
-            onChangeUsername = {
-                currentScreen = Screen.usernameSetup
-            },
+            onChangeUsername = { viewModel.navigateTo(Screen.usernameSetup) },
             onPurchaseReputation = { onSuccess ->
-                userRepository.applyMeritAction(
-                    action = "PURCHASE_REPUTATION_VIEW",
-                    onSuccess = {
-                        userRepository.getUserById(currentUser.id) { updatedUser ->
-                            updatedUser?.let { currentUser = it }
-                            onSuccess()
-                        }
-                    },
-                    onError = { e ->
-                        Toast.makeText(context, e.message, Toast.LENGTH_SHORT).show()
-                    }
-                )
+                viewModel.applyMeritAction("PURCHASE_REPUTATION_VIEW", onSuccess) { error ->
+                    Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+                }
             },
             onExpandCap = {
-                userRepository.applyMeritAction(
-                    action = "EXPAND_MERIT_CAP",
-                    onSuccess = {
-                        userRepository.getUserById(currentUser.id) { updatedUser ->
-                            updatedUser?.let { currentUser = it }
-                            Toast.makeText(context, "Cap Expanded", Toast.LENGTH_SHORT).show()
-                        }
-                    },
-                    onError = { e ->
-                        Toast.makeText(context, e.message, Toast.LENGTH_SHORT).show()
-                    }
-                )
+                viewModel.applyMeritAction("EXPAND_MERIT_CAP", {
+                    Toast.makeText(context, "Cap Expanded", Toast.LENGTH_SHORT).show()
+                }) { error ->
+                    Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+                }
             }
         )
-        Screen.results -> {
-            val activity = LocalActivity.current
 
-            LaunchedEffect(Unit) {
-                if (latestSubmission == null) {
-                    submissionRepository.getLastSubmission(
-                        onSuccess = { latestSubmission = it },
-                        onError = { it.printStackTrace() }
-                    )
+        Screen.results -> {
+            if (viewModel.latestSubmission == null) {
+                LaunchedEffect(Unit) {
+                    viewModel.loadLatestSubmission()
                 }
             }
 
-            if (latestSubmission != null) {
+            if (viewModel.latestSubmission != null) {
                 Results(
-                    submission = latestSubmission!!,
-                    isPlaced = currentUser.isPlaced,
+                    submission = viewModel.latestSubmission!!,
+                    isPlaced = viewModel.currentUser.isPlaced,
                     onNavigateBack = {
-                        if (currentUser.isPhilosopher) {
-                            pagerInitialPage = 1
-                            currentScreen = Screen.home
-                        } else {
-                            submissionAdCounter++
-                            pendingNavigationAfterAd = Screen.home
-                            pagerInitialPage = 1
-
-                            if (submissionAdCounter % 2 == 0) {
-                                activity?.let {
-                                    AdManager.showAd(it)
-                                }
-                                currentScreen = Screen.home
-                            } else {
-                                currentScreen = Screen.postSubmissionAd
-                            }
+                        viewModel.continueWithAd(activity, Screen.home) {
+                            viewModel.pagerInitialPage = 1
                         }
                     },
                     onNavigateToPractice = {
-                        if (currentUser.isPhilosopher) {
-                            pagerInitialPage = 0
-                            currentScreen = Screen.home
-                        } else {
-                            submissionAdCounter++
-                            pendingNavigationAfterAd = Screen.practice
-                            pagerInitialPage = 0
-
-                            if (submissionAdCounter % 2 == 0) {
-                                activity?.let {
-                                    AdManager.showAd(it)
-                                }
-                                currentScreen = Screen.home
-                            } else {
-                                currentScreen = Screen.postSubmissionAd
-                            }
+                        viewModel.continueWithAd(activity, Screen.home) {
+                            viewModel.pagerInitialPage = 0
                         }
                     }
                 )
@@ -359,36 +181,15 @@ fun AppRoot(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text("No result available.", color = Color.White, fontWeight = FontWeight.Bold)
                         Spacer(modifier = Modifier.height(16.dp))
-
-                        var isRetrying by remember { mutableStateOf(false) }
-
                         Button(
-                            onClick = {
-                                isRetrying = true
-                                submissionRepository.getLastSubmission(
-                                    onSuccess = {
-                                        latestSubmission = it
-                                        isRetrying = false
-                                    },
-                                    onError = {
-                                        isRetrying = false
-                                        Toast.makeText(context, "Retry failed", Toast.LENGTH_SHORT).show()
-                                    }
-                                )
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black),
-                            enabled = !isRetrying
+                            onClick = { viewModel.refreshCurrentUser() },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black)
                         ) {
-                            Text(if (isRetrying) "Fetching..." else "Retry", fontWeight = FontWeight.Black)
+                            Text("Retry", fontWeight = FontWeight.Black)
                         }
-
                         Spacer(modifier = Modifier.height(12.dp))
-
                         Button(
-                            onClick = { 
-                                pagerInitialPage = 1
-                                currentScreen = Screen.home 
-                            },
+                            onClick = { viewModel.navigateTo(Screen.home, page = 1) },
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFD700), contentColor = Color.Black)
                         ) {
                             Text("Return Home", fontWeight = FontWeight.Black)
@@ -397,569 +198,185 @@ fun AppRoot(
                 }
             }
         }
+
         Screen.leaderboard -> LeaderboardScreen(
-            currentUser = currentUser,
-            onNavigateBack = { 
-                pagerInitialPage = 2
-                currentScreen = Screen.home 
-            },
+            currentUser = viewModel.currentUser,
+            onNavigateBack = { viewModel.navigateTo(Screen.home, page = 2) },
             onUserClick = { user ->
-                selectedProfileUserId = user.id
-                currentScreen = Screen.userProfile
+                viewModel.loadViewedUserProfile(user.id)
+                viewModel.navigateTo(Screen.userProfile)
             }
         )
+
         Screen.tournamentDetails -> {
-            val initialTournament = selectedTournament
+            val tournament = viewModel.selectedTournament
+            var isEnrolling by remember(tournament?.id) { mutableStateOf(false) }
 
-            var liveTournament by remember(initialTournament?.id) { mutableStateOf(initialTournament) }
-            var isEnrolled by remember(initialTournament?.id, currentUser.id) { mutableStateOf(false) }
-            var isSubmitted by remember(initialTournament?.id, currentUser.id) { mutableStateOf(false) }
-            var isEnrolling by remember(initialTournament?.id, currentUser.id) { mutableStateOf(false) }
-            var completedLeaderboard by remember(initialTournament?.id) { mutableStateOf<List<TournamentLeaderboardEntry>>(emptyList()) }
-
-            DisposableEffect(initialTournament?.id, currentUser.id) {
-                if (initialTournament == null) {
-                    onDispose {}
-                } else {
-                    val tournamentRegistration = tournamentRepository.listenToTournament(
-                        tournamentId = initialTournament.id,
-                        onUpdate = { updatedTournament ->
-                            liveTournament = updatedTournament
-                        },
-                        onError = { e: Exception ->
-                            e.printStackTrace()
-                        }
-                    )
-
-                    val enrollmentRegistration = tournamentRepository.listenToEnrollmentStatus(
-                        tournamentId = initialTournament.id,
-                        userId = currentUser.id,
-                        onUpdate = { enrolled ->
-                            isEnrolled = enrolled
-                        },
-                        onError = { e: Exception  ->
-                            e.printStackTrace()
-                        }
-                    )
-
-                    val submissionRegistration = tournamentRepository.listenToSubmissionStatus(
-                        tournamentId = initialTournament.id,
-                        userId = currentUser.id,
-                        onUpdate = { submitted ->
-                            isSubmitted = submitted
-                        },
-                        onError = { e: Exception  ->
-                            e.printStackTrace()
-                        }
-                    )
-
-                    onDispose {
-                        tournamentRegistration.remove()
-                        enrollmentRegistration.remove()
-                        submissionRegistration.remove()
-                    }
+            DisposableEffect(tournament?.id) {
+                if (tournament != null) {
+                    viewModel.startObservingTournament(tournament.id)
+                }
+                onDispose {
+                    viewModel.stopObservingTournament()
                 }
             }
-
-            LaunchedEffect(liveTournament?.id, liveTournament?.status) {
-                val tournament = liveTournament ?: return@LaunchedEffect
-
-                if (tournament.status == TournamentStatus.COMPLETED) {
-                    tournamentRepository.getLeaderboard(
-                        tournamentId = tournament.id,
-                        onSuccess = { results ->
-                            val authorIds = results.map { it.authorId }
-                            userRepository.getUsersByIds(authorIds) { usersMap ->
-                                completedLeaderboard = results.map { submission ->
-                                    TournamentLeaderboardEntry(
-                                        submission = submission,
-                                        user = usersMap[submission.authorId]
-                                    )
-                                }
-                            }
-                        },
-                        onError = { e ->
-                            e.printStackTrace()
-                            completedLeaderboard = emptyList()
-                        }
-                    )
-                } else {
-                    completedLeaderboard = emptyList()
-                }
-            }
-
-            val tournament = liveTournament
 
             if (tournament != null) {
                 TournamentDetails(
                     tournament = tournament,
-                    onNavigateBack = { 
-                        pagerInitialPage = 2
-                        currentScreen = Screen.home 
-                    },
+                    onNavigateBack = { viewModel.navigateTo(Screen.home, page = 2) },
                     onHostClick = {
-                        selectedProfileUserId = tournament.creatorId
-                        currentScreen = Screen.userProfile
+                        viewModel.loadViewedUserProfile(tournament.creatorId)
+                        viewModel.navigateTo(Screen.userProfile)
                     },
-                    isEnrolled = isEnrolled,
-                    isSubmitted = isSubmitted,
+                    isEnrolled = viewModel.isEnrolledInSelectedTournament,
+                    isSubmitted = viewModel.isSubmittedToSelectedTournament,
                     isEnrolling = isEnrolling,
                     onEnroll = {
-                        if (isEnrolled || isEnrolling) return@TournamentDetails
-
+                        if (viewModel.isEnrolledInSelectedTournament || isEnrolling) return@TournamentDetails
                         isEnrolling = true
-
-                        tournamentRepository.enrollUserViaFunction(
-                            tournamentId = tournament.id,
-                            onSuccess = {
-                                Toast.makeText(
-                                    context,
-                                    "Enrolled successfully",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-
-                                userRepository.getUserById(currentUser.id) { updatedUser ->
-                                    updatedUser?.let { currentUser = it }
-                                    isEnrolling = false
-                                }
-                            },
-                            onError = { e: Exception ->
-                                Toast.makeText(
-                                    context,
-                                    e.message ?: "Failed to enroll",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                                isEnrolling = false
-                            }
-                        )
+                        viewModel.enrollInTournament(tournament.id, { isEnrolling = false }) { error ->
+                            Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+                            isEnrolling = false
+                        }
                     },
                     onSubmitToTournament = {
-                        activeTournamentId = tournament.id
-                        selectedTournament = tournament
-
-                        currentGamemode = when (tournament.gamemode) {
-                            "ON_TOPIC" -> OnTopicWriting(
-                                theme = Theme(
-                                    id = tournament.themeId ?: "",
-                                    name = tournament.themeName ?: "Unknown Theme"
-                                ),
-                                topic = Topic(
-                                    id = tournament.topicId ?: "",
-                                    name = tournament.topicName ?: "Unknown Topic"
+                        viewModel.startWriting(
+                            gamemode = when (tournament.gamemode) {
+                                "ON_TOPIC" -> OnTopicWriting(
+                                    theme = Theme(id = tournament.themeId ?: "", name = tournament.themeName ?: "Unknown Theme"),
+                                    topic = Topic(id = tournament.topicId ?: "", name = tournament.topicName ?: "Unknown Topic")
                                 )
-                            )
-                            else -> StandardWriting
-                        }
-
-                        currentPlayMode = PlayMode.Tournament(tournament.id)
-                        currentScreen = Screen.writing
+                                else -> StandardWriting
+                            },
+                            playMode = PlayMode.Tournament(tournament.id),
+                            tournament = tournament
+                        )
                     },
-                    onViewResults = {
-                        selectedTournament = tournament
-                        currentScreen = Screen.tournamentResults
-                    },
-                    completedLeaderboard = completedLeaderboard,
+                    onViewResults = { viewModel.navigateTo(Screen.tournamentResults) },
+                    completedLeaderboard = viewModel.tournamentLeaderboard,
                     onOpenSubmission = { submission ->
-                        latestSubmission = submission
-                        currentScreen = Screen.results
+                        viewModel.latestSubmission = submission
+                        viewModel.navigateTo(Screen.results)
                     }
                 )
             } else {
-                pagerInitialPage = 2
-                currentScreen = Screen.home
+                viewModel.navigateTo(Screen.home, page = 2)
             }
         }
+
         Screen.userProfile -> {
-            var viewedUser by remember { mutableStateOf<Users?>(null) }
-            var viewedPantheonPosition by remember { mutableStateOf<Int?>(null) }
-
-            LaunchedEffect(selectedProfileUserId) {
-                val userId = selectedProfileUserId ?: return@LaunchedEffect
-
-                userRepository.getUserById(userId) { user ->
-                    viewedUser = user
-
-                    if (user != null && user.rating >= PantheonManager.MIN_RATING) {
-                        userRepository.getTop100Users { top100 ->
-                            val (isPantheon, position) =
-                                PantheonManager.checkPantheonStatus(user, top100)
-                            viewedPantheonPosition = if (isPantheon) position else null
-                        }
-                    } else {
-                        viewedPantheonPosition = null
-                    }
-                }
-            }
-
-            if (viewedUser != null) {
+            if (viewModel.viewedUser != null) {
                 Profile(
-                    user = viewedUser!!,
-                    isOwner = viewedUser!!.id == currentUser.id,
-                    pantheonPosition = viewedPantheonPosition,
-                    onNavigateBack = { 
-                        pagerInitialPage = 2
-                        currentScreen = Screen.home 
-                    },
-                    onNavigateToSubmissions = { currentScreen = Screen.submissions },
-                    onNavigateToSavedSubmissions = { currentScreen = Screen.savedSubmissions },
+                    user = viewModel.viewedUser!!,
+                    isOwner = viewModel.viewedUser!!.id == viewModel.currentUser.id,
+                    pantheonPosition = viewModel.viewedPantheonPosition,
+                    onNavigateBack = { viewModel.navigateTo(Screen.home, page = 2) },
+                    onNavigateToSubmissions = { viewModel.navigateTo(Screen.submissions) },
+                    onNavigateToSavedSubmissions = { viewModel.navigateTo(Screen.savedSubmissions) },
                     onLinkGoogle = {},
                     onLogout = {},
                     onDeleteAccount = {},
                     onChangeUsername = {},
                     onPurchaseReputation = { onSuccess ->
-                        userRepository.applyMeritAction(
-                            action = "PURCHASE_REPUTATION_VIEW",
-                            onSuccess = {
-                                userRepository.getUserById(currentUser.id) { updatedUser ->
-                                    updatedUser?.let { currentUser = it }
-                                    onSuccess()
-                                }
-                            },
-                            onError = { e ->
-                                Toast.makeText(context, e.message, Toast.LENGTH_SHORT).show()
-                            }
-                        )
+                        viewModel.applyMeritAction("PURCHASE_REPUTATION_VIEW", onSuccess) { error ->
+                            Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+                        }
                     },
                     onExpandCap = {}
                 )
             } else {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text("Loading profile...")
                 }
             }
         }
+
         Screen.tournamentResults -> {
-            val activity = LocalActivity.current
-            val tournament = selectedTournament
-            var leaderboard by remember(tournament?.id) { mutableStateOf<List<TournamentLeaderboardEntry>>(emptyList()) }
-            var isLoading by remember(tournament?.id) { mutableStateOf(true) }
-
-            fun continueWithAd(nextScreen: Screen, beforeNavigate: (() -> Unit)? = null) {
-                if (currentUser.isPhilosopher) {
-                    beforeNavigate?.invoke()
-                    currentScreen = nextScreen
-                    return
-                }
-                submissionAdCounter++
-                pendingNavigationAfterAd = nextScreen
-
-                if (submissionAdCounter % 2 == 0) {
-                    activity?.let {
-                        AdManager.showAd(it)
-                    }
-                    beforeNavigate?.invoke()
-                    currentScreen = nextScreen
-                } else {
-                    beforeNavigate?.invoke()
-                    currentScreen = Screen.postSubmissionAd
-                }
-            }
-
-            LaunchedEffect(tournament?.id) {
-                if (tournament == null) {
-                    isLoading = false
-                    return@LaunchedEffect
-                }
-
-                tournamentRepository.getLeaderboard(
-                    tournamentId = tournament.id,
-                    onSuccess = { results ->
-                        val authorIds = results.map { it.authorId }
-
-                        userRepository.getUsersByIds(authorIds) { usersMap ->
-                            leaderboard = results.map { submission ->
-                                TournamentLeaderboardEntry(
-                                    submission = submission,
-                                    user = usersMap[submission.authorId]
-                                )
-                            }
-                            isLoading = false
-                        }
-                    },
-                    onError = { e ->
-                        e.printStackTrace()
-                        leaderboard = emptyList()
-                        isLoading = false
-                    }
-                )
-            }
-
+            val tournament = viewModel.selectedTournament
             if (tournament != null) {
                 TournamentResultsScreen(
                     tournament = tournament,
-                    leaderboard = leaderboard,
-                    isLoading = isLoading,
-                    currentUserId = currentUser.id,
-                    onNavigateBack = {
-                        continueWithAd(Screen.tournamentDetails)
-                    },
+                    leaderboard = viewModel.tournamentLeaderboard,
+                    isLoading = viewModel.isTournamentLoading,
+                    currentUserId = viewModel.currentUser.id,
+                    onNavigateBack = { viewModel.continueWithAd(activity, Screen.tournamentDetails) },
                     onTipUser = { recipientId, amount ->
-                        tournamentRepository.sendTournamentTip(
-                            tournamentId = tournament.id,
-                            tipperId = currentUser.id,
-                            recipientId = recipientId,
-                            amount = amount,
-                            onSuccess = {
-                                Toast.makeText(
-                                    context,
-                                    "$amount Merit sent",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-
-                                userRepository.getUserById(currentUser.id) { updatedUser ->
-                                    updatedUser?.let { currentUser = it }
-                                }
-
-                                continueWithAd(Screen.tournamentResults)
-                            },
-                            onError = { e ->
-                                Toast.makeText(
-                                    context,
-                                    e.message ?: "Failed to send tip",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                        )
+                        viewModel.sendTip(tournament.id, recipientId, amount) { error ->
+                            Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+                        }
                     },
                     onOpenUserProfile = { userId ->
-                        continueWithAd(
-                            nextScreen = Screen.userProfile,
-                            beforeNavigate = {
-                                selectedProfileUserId = userId
-                            }
-                        )
+                        viewModel.continueWithAd(activity, Screen.userProfile) {
+                            viewModel.loadViewedUserProfile(userId)
+                        }
                     }
                 )
             } else {
-                pagerInitialPage = 2
-                currentScreen = Screen.home
+                viewModel.navigateTo(Screen.home, page = 2)
             }
         }
-        Screen.loading -> {
-            var isResolved by remember { mutableStateOf(false) }
-            var isTimeout by remember { mutableStateOf(false) }
-            var elapsedSeconds by remember { mutableIntStateOf(0) }
 
-            DisposableEffect(currentUser.id) {
-                val registration = submissionRepository.getLastSubmissionRealtime(
-                    onUpdate = { submission ->
-                        if (!isResolved && !isTimeout) {
-                            if (submission.status == SubmissionStatus.EVALUATED) {
-                                isResolved = true
-                                latestSubmission = submission
-                                
-                                userRepository.getUserById(currentUser.id) { updatedUser ->
-                                    updatedUser?.let { freshUser ->
-                                        val justGotPlaced = !previousUserIsPlaced && freshUser.isPlaced && !freshUser.hasSeenPlacementReveal
-                                        currentUser = freshUser
-                                        previousUserIsPlaced = freshUser.isPlaced
-                                        currentScreen = if (justGotPlaced) Screen.placementReveal else Screen.results
-                                    }
-                                }
-                                
-                            } else if (submission.status == SubmissionStatus.FAILED) {
-                                isResolved = true
-                                Toast.makeText(context, "Did R8 fail to judge this entry?.", Toast.LENGTH_LONG).show()
-                                currentScreen = Screen.home
-                            }
-                        }
-                    },
-                    onError = { 
-                        it.printStackTrace()
-                        if (it.message?.contains("index") == true) {
-                            Toast.makeText(context, "Critical Error, Contact support post-haste!.", Toast.LENGTH_LONG).show()
-                        }
-                    }
-                )
-                onDispose {
-                    registration?.remove()
+        Screen.loading -> LoadingScreen(
+            elapsedSeconds = viewModel.loadingElapsedSeconds,
+            isTimeout = viewModel.loadingTimeout,
+            onReturnHome = { viewModel.navigateTo(Screen.home) }
+        )
+
+        Screen.createTournament -> CreateTournamentScreen(
+            user = viewModel.currentUser,
+            onCreate = { title, gamemode, prizePool, maxPlayers ->
+                viewModel.createTournament(title, gamemode, prizePool, maxPlayers) { error ->
+                    Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+                }
+            },
+            onBack = { viewModel.navigateTo(Screen.home, page = 2) }
+        )
+
+        Screen.postSubmissionAd -> PostSubmissionAdScreen(
+            onContinue = {
+                val next = viewModel.pendingNavigationAfterAd
+                viewModel.pendingNavigationAfterAd = null
+                viewModel.navigateTo(next ?: Screen.home)
+            },
+            onGoAdFree = { viewModel.navigateTo(Screen.paywall) }
+        )
+
+        Screen.paywall -> PaywallScreen(
+            onBack = { viewModel.navigateTo(Screen.home, page = 1) },
+            onSubscribe = {
+                viewModel.enablePhilosopher({
+                    Toast.makeText(context, "Status Elevated", Toast.LENGTH_SHORT).show()
+                    viewModel.navigateTo(Screen.home, page = 1)
+                }) { error ->
+                    Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
                 }
             }
+        )
 
-            LaunchedEffect(currentUser.id) {
-                var pollCount = 0
-                while (!isResolved && !isTimeout) {
-                    delay(3000)
-                    pollCount++
-                    elapsedSeconds = pollCount * 3
-                    
-                    if (elapsedSeconds > 90) {
-                        isTimeout = true
-                        break
-                    }
-
-                    submissionRepository.getLastSubmission(
-                        onSuccess = { submission ->
-                            if (submission != null && !isResolved && !isTimeout) {
-                                if (submission.status == SubmissionStatus.EVALUATED) {
-                                    isResolved = true
-                                    latestSubmission = submission
-                                    
-                                    userRepository.getUserById(currentUser.id) { updatedUser ->
-                                        updatedUser?.let { freshUser ->
-                                            val justGotPlaced = !previousUserIsPlaced && freshUser.isPlaced && !freshUser.hasSeenPlacementReveal
-                                            currentUser = freshUser
-                                            previousUserIsPlaced = freshUser.isPlaced
-                                            currentScreen = if (justGotPlaced) Screen.placementReveal else Screen.results
-                                        }
-                                    }
-                                } else if (submission.status == SubmissionStatus.FAILED) {
-                                    isResolved = true
-                                    Toast.makeText(context, "Evaluation failed.", Toast.LENGTH_LONG).show()
-                                    currentScreen = Screen.home
-                                }
-                            }
-                        },
-                        onError = { it.printStackTrace() }
-                    )
+        Screen.usernameSetup -> UsernameSetupScreen(
+            isSaving = false,
+            errorMessage = null,
+            onSubmit = { newName ->
+                viewModel.changeUsername(newName, {
+                    viewModel.navigateTo(Screen.profile)
+                }) { error ->
+                    Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
                 }
+            },
+            checkAvailability = { name, callback ->
+                viewModel.checkUsernameAvailability(name, callback)
+            },
+            validateUsername = { name ->
+                viewModel.validateUsername(name)
             }
-            LoadingScreen(
-                elapsedSeconds = elapsedSeconds,
-                isTimeout = isTimeout,
-                onReturnHome = {
-                    currentScreen = Screen.home
-                }
-            )
-        }
-        Screen.createTournament -> {
-            CreateTournamentScreen(
-                user = currentUser,
-                onCreate = { title, gamemode, prizePool, maxPlayers ->
+        )
 
-                    tournamentRepository.createUserTournament(
-                        title,
-                        gamemode,
-                        prizePool,
-                        maxPlayers,
-                        onSuccess = {
-                            pagerInitialPage = 2
-                            currentScreen = Screen.home
-                        },
-                        onError = {
-                            it.printStackTrace()
-                        }
-                    )
-                },
-                onBack = { 
-                    pagerInitialPage = 2
-                    currentScreen = Screen.home 
-                }
-            )
-        }
-        Screen.postSubmissionAd -> {
-            PostSubmissionAdScreen(
-                onContinue = {
-                    val next = pendingNavigationAfterAd
-                    pendingNavigationAfterAd = null
-                    currentScreen = next ?: Screen.home
-                },
-                onGoAdFree = {
-                    currentScreen = Screen.paywall
-                }
-            )
-        }
-        Screen.paywall -> {
-            PaywallScreen(
-                onBack = { 
-                    pagerInitialPage = 1
-                    currentScreen = Screen.home 
-                },
-                onSubscribe = {
-                    userRepository.enablePhilosopher(
-                        purchaseToken = "test_token",
-                        productId = "philosopher_sub",
-                        onSuccess = {
-                            userRepository.getUserById(currentUser.id) { updatedUser ->
-                                updatedUser?.let { currentUser = it }
-                            }
-                            Toast.makeText(
-                                context,
-                                "Status Elevated",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                            pagerInitialPage = 1
-                            currentScreen = Screen.home
-                        },
-                        onError = { e ->
-                            Toast.makeText(
-                                context,
-                                e.message ?: "Failed to enable Philosopher",
-                                Toast.LENGTH_SHORT
-                                ).show()
-                        }
-                    )
-                }
-            )
-        }
-        Screen.usernameSetup -> {
-            UsernameSetupScreen(
-                isSaving = false,
-                errorMessage = null,
-                onSubmit = { newName ->
-                    userRepository.changeUsernameWithMerit(
-                        newUsername = newName,
-                        onSuccess = {
-                            userRepository.getUserById(currentUser.id) { updatedUser ->
-                                updatedUser?.let { currentUser = it }
-                                currentScreen = Screen.profile
-                            }
-                        },
-                        onError = { e ->
-                            Toast.makeText(context, e.message, Toast.LENGTH_SHORT).show()
-                        }
-                    )
-                },
-                checkAvailability = { name, callback ->
-                    userRepository.isUsernameAvailable(name, callback)
-                },
-                validateUsername = { name ->
-                    userRepository.validateUsername(name)
-                }
-            )
-        }
-        Screen.placementReveal -> {
-            PlacementRevealScreen(
-                league = League.fromRating(currentUser.rating),
-                onContinue = {
-                    userRepository.markPlacementRevealSeen(
-                        userId = currentUser.id,
-                        onSuccess = {
-                            userRepository.getUserById(currentUser.id) { updatedUser ->
-                                updatedUser?.let { freshUser ->
-                                    currentUser = freshUser
-                                    currentScreen = Screen.results
-                                }
-                            }
-                        },
-                        onError = { it.printStackTrace() }
-                    )
-                }
-            )
-        }
+        Screen.placementReveal -> PlacementRevealScreen(
+            league = League.fromRating(viewModel.currentUser.rating),
+            onContinue = {
+                viewModel.onPlacementRevealSeen { }
+            }
+        )
     }
-}
-
-enum class Screen {
-    home,
-    practice,
-    writing,
-    submissions,
-    savedSubmissions,
-    competitions,
-    profile,
-    results,
-    leaderboard,
-    tournamentDetails,
-    tournamentResults,
-    userProfile,
-    loading,
-    createTournament,
-    postSubmissionAd,
-    paywall,
-    usernameSetup,
-    placementReveal
 }

@@ -8,5 +8,6 @@ data class Evaluation(
     val feedback: String = "",
     val resultStatus: SubmissionStatus = SubmissionStatus.PENDING,
     val rankLeaderboard: Int? = null,
-    val metrics: Map<String, Double> = emptyMap()
+    val metrics: Map<String, Double> = emptyMap(),
+    val isMock: Boolean = false
 )

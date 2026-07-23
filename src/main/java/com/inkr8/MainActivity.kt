@@ -101,12 +101,16 @@ class MainActivity : ComponentActivity() {
                                     username = chosenName,
                                     onSuccess = {
                                         userRepository.getUserById(currentUser!!.id) { updatedUser ->
-                                            currentUserState.value = updatedUser
+                                            if (updatedUser != null) {
+                                                currentUserState.value = updatedUser
+                                            } else {
+                                                usernameError = "Failed to load updated profile. Try again."
+                                            }
                                             isSavingUsername = false
                                         }
                                     },
                                     onError = { e ->
-                                        usernameError = e.message
+                                        usernameError = e.message ?: "Username claim failed"
                                         isSavingUsername = false
                                     }
                                 )
