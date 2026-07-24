@@ -18,7 +18,7 @@ import com.inkr8.data.Submissions
 import com.inkr8.data.Users
 import com.inkr8.economy.EconomyConfig
 import com.inkr8.ui.theme.Inkr8Theme
-import com.inkr8.utils.TimeUtils.formatTime
+import com.inkr8.utils.FormatUtils
 
 @Composable
 fun SubmissionsScreen(
@@ -145,7 +145,7 @@ fun SubmissionItem(
                         color = MaterialTheme.colorScheme.primary
                     )
                     Text(
-                        text = formatTime(submission.timestamp),
+                        text = FormatUtils.formatDate(submission.timestamp) + " " + FormatUtils.formatTime(submission.timestamp),
                         style = MaterialTheme.typography.labelSmall,
                         color = Color.Gray
                     )
@@ -153,7 +153,7 @@ fun SubmissionItem(
                 
                 val score = submission.evaluation?.finalScore ?: 0.0
                 Text(
-                    text = "%.2f".format(score)+"%",
+                    text = FormatUtils.formatPercentage(score),
                     fontWeight = FontWeight.ExtraBold,
                     fontSize = 24.sp,
                     color = when {
@@ -188,7 +188,7 @@ fun SubmissionItem(
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
                     modifier = Modifier.height(32.dp)
                 ) {
-                    Text("Save - $saveCost Merit", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Text("Save - ${FormatUtils.formatMerit(saveCost.toLong())} Merit", fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }

@@ -40,7 +40,6 @@ import com.inkr8.economy.TournamentRewardCalculator
 import com.inkr8.ui.theme.Inkr8Theme
 import com.inkr8.utils.FormatUtils
 import com.inkr8.utils.TimeUtils
-import java.text.NumberFormat
 import java.util.Locale
 
 @Composable
@@ -57,9 +56,8 @@ fun TournamentDetails(
     isEnrolling: Boolean = false,
     completedLeaderboard: List<TournamentLeaderboardEntry> = emptyList()
 ){
-    val formatter = NumberFormat.getNumberInstance(Locale.US)
-    val formattedPrizePool = formatter.format(tournament.prizePool)
-    val formattedEntryFee = formatter.format(tournament.entranceFee)
+    val formattedPrizePool = FormatUtils.formatMerit(tournament.prizePool)
+    val formattedEntryFee = FormatUtils.formatMerit(tournament.entranceFee)
 
     val analyticsContext = LocalContext.current
     val firebaseAnalytics = remember { FirebaseAnalytics.getInstance(analyticsContext) }
@@ -165,8 +163,8 @@ fun TournamentDetails(
                             val score = entry.submission.evaluation?.finalScore ?: 0.0
                             RewardDistributionRow(
                                 place = FormatUtils.formatPlace(index + 1),
-                                merit = formatter.format(merit),
-                                percent = String.format(Locale.US, "%.2f", score),
+                                merit = FormatUtils.formatMerit(merit),
+                                percent = FormatUtils.formatScore(score),
                                 participant = entry.user?.name?.ifBlank { null } ?: entry.submission.authorId,
                                 onClick = { onOpenSubmission(entry.submission) },
                                 primaryGold = primaryGold
@@ -177,8 +175,8 @@ fun TournamentDetails(
                             val merit = (tournament.prizePool * percent).toLong()
                             RewardDistributionRow(
                                 place = FormatUtils.formatPlace(index + 1),
-                                merit = formatter.format(merit),
-                                percent = "${String.format(Locale.US, "%.2f", percent * 100)}%",
+                                merit = FormatUtils.formatMerit(merit),
+                                percent = FormatUtils.formatPercentage(percent * 100),
                                 participant = "TBD",
                                 onClick = {},
                                 primaryGold = primaryGold

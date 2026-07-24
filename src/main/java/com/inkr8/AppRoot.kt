@@ -182,7 +182,7 @@ fun AppRoot(
                         Text("No result available.", color = Color.White, fontWeight = FontWeight.Bold)
                         Spacer(modifier = Modifier.height(16.dp))
                         Button(
-                            onClick = { viewModel.refreshCurrentUser() },
+                            onClick = { viewModel.loadLatestSubmission() },
                             colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black)
                         ) {
                             Text("Retry", fontWeight = FontWeight.Black)

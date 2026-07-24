@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.inkr8.data.Submissions
 import com.inkr8.ui.theme.Inkr8Theme
-import com.inkr8.utils.TimeUtils.formatTime
+import com.inkr8.utils.FormatUtils
 
 @Composable
 fun SavedSubmissionsScreen(
@@ -157,7 +157,7 @@ fun SubmissionDetailsDialog(
                             fontSize = 14.sp
                         )
                         Text(
-                            text = formatTime(submission.timestamp),
+                            text = FormatUtils.formatDate(submission.timestamp) + " " + FormatUtils.formatTime(submission.timestamp),
                             color = Color.Gray,
                             fontSize = 12.sp
                         )
@@ -165,7 +165,7 @@ fun SubmissionDetailsDialog(
                     
                     val score = submission.evaluation?.finalScore ?: 0.0
                     Text(
-                        text = "%.2f".format(score) + "%",
+                        text = FormatUtils.formatPercentage(score),
                         color = Color.White,
                         fontWeight = FontWeight.ExtraBold,
                         fontSize = 28.sp
@@ -285,7 +285,7 @@ fun SavedSubmissionItem(submission: Submissions, onClick: () -> Unit) {
                         color = Color(0xFFFFD700)
                     )
                     Text(
-                        text = formatTime(submission.timestamp),
+                        text = FormatUtils.formatDate(submission.timestamp),
                         style = MaterialTheme.typography.labelSmall,
                         color = Color.Gray
                     )
@@ -293,7 +293,7 @@ fun SavedSubmissionItem(submission: Submissions, onClick: () -> Unit) {
                 
                 val score = submission.evaluation?.finalScore ?: 0.0
                 Text(
-                    text = "%.2f".format(score)+"%",
+                    text = FormatUtils.formatPercentage(score),
                     fontWeight = FontWeight.ExtraBold,
                     fontSize = 24.sp,
                     color = Color.White

@@ -7,6 +7,9 @@ import com.google.firebase.firestore.QuerySnapshot
 import com.inkr8.data.Users
 import com.google.firebase.functions.FirebaseFunctions
 import com.inkr8.rating.League
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 
 class UserRepository(
     private val functions: FirebaseFunctions = FirebaseFunctions.getInstance(),
@@ -22,6 +25,20 @@ class UserRepository(
         private var lastFetchTime: Long = 0
         private const val CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
         private val cacheLock = Any()
+    }
+
+    fun listenToUser(userId: String): Flow<Users?> = callbackFlow {
+        val listener = usersCollection.document(userId).addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                return@addSnapshotListener
+            }
+            if (snapshot != null && snapshot.exists()) {
+                trySend(snapshot.toObject(Users::class.java))
+            } else {
+                trySend(null)
+            }
+        }
+        awaitClose { listener.remove() }
     }
 
     fun getAllUsers(onResult: (List<Users>) -> Unit) {

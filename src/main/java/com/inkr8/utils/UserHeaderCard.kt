@@ -23,8 +23,6 @@ import coil.compose.AsyncImage
 import com.inkr8.R
 import com.inkr8.data.Users
 import com.inkr8.rating.League
-import java.text.NumberFormat
-import java.util.Locale
 
 @Composable
 fun UserHeaderCard(
@@ -95,7 +93,7 @@ fun UserHeaderCard(
                                 color = Color.DarkGray,
                                 fontSize = 10.sp
                             )
-                            Spacer(modifier = Modifier.width(6.dp))
+                            Spacer(modifier = Modifier.width(6.6.dp))
                             Text(
                                 text = "Philosopher",
                                 style = MaterialTheme.typography.labelSmall,
@@ -110,7 +108,7 @@ fun UserHeaderCard(
 
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
-                        text = NumberFormat.getNumberInstance(Locale.US).format(user.merit),
+                        text = FormatUtils.formatMerit(user.merit),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Black,
                         color = Color.White
@@ -145,7 +143,7 @@ fun UserHeaderCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Capacity: ${NumberFormat.getNumberInstance(Locale.US).format(user.meritCap)}",
+                        text = "Capacity: ${FormatUtils.formatMerit(user.meritCap)}",
                         style = MaterialTheme.typography.labelSmall,
                         color = Color.DarkGray,
                         fontSize = 8.sp,
@@ -159,7 +157,7 @@ fun UserHeaderCard(
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = "SRR Active: ${NumberFormat.getNumberInstance(Locale.US).format(user.meritHold)}",
+                                text = "SRR Active: ${FormatUtils.formatMerit(user.meritHold)}",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = primaryGold,
                                 fontSize = 8.sp,

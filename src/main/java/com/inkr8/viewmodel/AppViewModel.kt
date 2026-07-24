@@ -12,6 +12,7 @@ import com.inkr8.repository.*
 import com.inkr8.rating.*
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 class AppViewModel(
@@ -65,10 +66,24 @@ class AppViewModel(
     private var enrollmentListener: ListenerRegistration? = null
     private var submissionStatusListener: ListenerRegistration? = null
     private var loadingResultListener: ListenerRegistration? = null
+    private var userObserverJob: Job? = null
 
     init {
+        observeCurrentUser()
         observeSubmissions()
         observePantheonStatus()
+    }
+
+    private fun observeCurrentUser() {
+        userObserverJob?.cancel()
+        userObserverJob = viewModelScope.launch {
+            userRepository.listenToUser(currentUser.id).collectLatest { updated ->
+                updated?.let { 
+                    currentUser = it 
+                    observePantheonStatus()
+                }
+            }
+        }
     }
 
     // --- Actions ---
@@ -131,7 +146,6 @@ class AppViewModel(
                 userId = currentUser.id,
                 submission = finalSubmission,
                 onSuccess = {
-                    refreshCurrentUser()
                     navigateTo(Screen.tournamentDetails)
                 },
                 onError = { e -> onError(e.message ?: "Tournament submission failed") }
@@ -140,7 +154,6 @@ class AppViewModel(
             submissionRepository.addSubmission(
                 submission = finalSubmission,
                 onSuccess = {
-                    refreshCurrentUser()
                     startLoadingResult()
                 },
                 onError = { e ->
@@ -154,9 +167,7 @@ class AppViewModel(
     fun saveSubmission(submissionId: String, onError: (String) -> Unit) {
         submissionRepository.saveSubmission(
             submissionId = submissionId,
-            onSuccess = {
-                refreshCurrentUser()
-            },
+            onSuccess = {},
             onError = { e -> onError(e.message ?: "Failed to save") }
         )
     }
@@ -182,7 +193,7 @@ class AppViewModel(
             purchaseToken = "test_token",
             productId = "philosopher_sub",
             onSuccess = {
-                refreshCurrentUser { onSuccess() }
+                onSuccess()
             },
             onError = { e -> onError(e.message ?: "Failed to enable Philosopher") }
         )
@@ -192,7 +203,7 @@ class AppViewModel(
         userRepository.changeUsernameWithMerit(
             newUsername = newName,
             onSuccess = {
-                refreshCurrentUser { onSuccess() }
+                onSuccess()
             },
             onError = { e -> onError(e.message ?: "Failed to change username") }
         )
@@ -212,13 +223,6 @@ class AppViewModel(
             onSuccess = { navigateTo(Screen.home, page = 2) },
             onError = { e -> onError(e.message ?: "Failed to create tournament") }
         )
-    }
-
-    fun refreshCurrentUser(onComplete: ((Users?) -> Unit)? = null) {
-        userRepository.getUserById(currentUser.id) { updated ->
-            updated?.let { currentUser = it }
-            onComplete?.invoke(updated)
-        }
     }
 
     fun loadLatestSubmission() {
@@ -247,7 +251,7 @@ class AppViewModel(
         tournamentRepository.enrollUserViaFunction(
             tournamentId = tournamentId,
             onSuccess = {
-                refreshCurrentUser { onSuccess() }
+                onSuccess()
             },
             onError = { e -> onError(e.message ?: "Failed to enroll") }
         )
@@ -293,13 +297,11 @@ class AppViewModel(
             if (submission.status == SubmissionStatus.EVALUATED) {
                 loadingResolved = true
                 latestSubmission = submission
-                refreshCurrentUser { freshUser ->
-                    freshUser?.let {
-                        val justGotPlaced = !previousUserIsPlaced && it.isPlaced && !it.hasSeenPlacementReveal
-                        previousUserIsPlaced = it.isPlaced
-                        navigateTo(if (justGotPlaced) Screen.placementReveal else Screen.results)
-                    }
-                }
+                
+                val justGotPlaced = !previousUserIsPlaced && currentUser.isPlaced && !currentUser.hasSeenPlacementReveal
+                previousUserIsPlaced = currentUser.isPlaced
+                navigateTo(if (justGotPlaced) Screen.placementReveal else Screen.results)
+                
             } else if (submission.status == SubmissionStatus.FAILED) {
                 loadingResolved = true
                 navigateTo(Screen.home)
@@ -387,7 +389,7 @@ class AppViewModel(
         userRepository.applyMeritAction(
             action = action,
             onSuccess = {
-                refreshCurrentUser { onSuccess() }
+                onSuccess()
             },
             onError = { e -> onError(e.message ?: "Action failed") }
         )
@@ -399,9 +401,7 @@ class AppViewModel(
             tipperId = currentUser.id,
             recipientId = recipientId,
             amount = amount,
-            onSuccess = {
-                refreshCurrentUser()
-            },
+            onSuccess = {},
             onError = { e -> onError(e.message ?: "Tip failed") }
         )
     }
@@ -410,10 +410,8 @@ class AppViewModel(
         userRepository.markPlacementRevealSeen(
             userId = currentUser.id,
             onSuccess = {
-                refreshCurrentUser {
-                    navigateTo(Screen.results)
-                    onComplete()
-                }
+                navigateTo(Screen.results)
+                onComplete()
             },
             onError = { it.printStackTrace() }
         )
@@ -425,6 +423,7 @@ class AppViewModel(
         enrollmentListener?.remove()
         submissionStatusListener?.remove()
         loadingResultListener?.remove()
+        userObserverJob?.cancel()
         loadingPollJob?.cancel()
         super.onCleared()
     }

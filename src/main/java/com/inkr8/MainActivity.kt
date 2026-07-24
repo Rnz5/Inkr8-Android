@@ -12,6 +12,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.ads.MobileAds
 import com.google.firebase.auth.FirebaseUser
 import com.inkr8.data.Users
@@ -19,6 +20,9 @@ import com.inkr8.repository.UserRepository
 import com.inkr8.screens.LoginScreen
 import com.inkr8.screens.UsernameSetupScreen
 import com.inkr8.ui.theme.Inkr8Theme
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
@@ -26,6 +30,7 @@ class MainActivity : ComponentActivity() {
     private val userRepository = UserRepository()
     private var currentUserState = mutableStateOf<Users?>(null)
     private var isCheckingAuthState = mutableStateOf(true)
+    private var userListenerJob: Job? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -100,14 +105,7 @@ class MainActivity : ComponentActivity() {
                                     userId = currentUser!!.id,
                                     username = chosenName,
                                     onSuccess = {
-                                        userRepository.getUserById(currentUser!!.id) { updatedUser ->
-                                            if (updatedUser != null) {
-                                                currentUserState.value = updatedUser
-                                            } else {
-                                                usernameError = "Failed to load updated profile. Try again."
-                                            }
-                                            isSavingUsername = false
-                                        }
+                                        isSavingUsername = false
                                     },
                                     onError = { e ->
                                         usernameError = e.message ?: "Username claim failed"
@@ -130,6 +128,7 @@ class MainActivity : ComponentActivity() {
                             initialUser = currentUser!!,
                             googleLauncher = googleLauncher,
                             onSessionEnded = {
+                                userListenerJob?.cancel()
                                 currentUserState.value = null
                                 isCheckingAuthState.value = false
                             }
@@ -150,8 +149,22 @@ class MainActivity : ComponentActivity() {
             uid = firebaseUser.uid,
             email = firebaseUser.email
         ) { user ->
-            currentUserState.value = user
+            startUserListener(user.id)
             isCheckingAuthState.value = false
         }
+    }
+
+    private fun startUserListener(userId: String) {
+        userListenerJob?.cancel()
+        userListenerJob = lifecycleScope.launch {
+            userRepository.listenToUser(userId).collectLatest { updated ->
+                currentUserState.value = updated
+            }
+        }
+    }
+
+    override fun onDestroy() {
+        userListenerJob?.cancel()
+        super.onDestroy()
     }
 }

@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -36,8 +37,6 @@ import com.inkr8.data.TournamentStatus
 import com.inkr8.data.Users
 import com.inkr8.ui.theme.Inkr8Theme
 import com.inkr8.utils.FormatUtils
-import java.text.NumberFormat
-import java.util.Locale
 
 @Composable
 fun TournamentResultsScreen(
@@ -209,8 +208,6 @@ private fun TournamentResultRow(
     onOpenUserProfile: (String) -> Unit,
     primaryGold: Color
 ) {
-    val formatter = NumberFormat.getNumberInstance(Locale.US)
-
     val finalScore = entry.submission.evaluation?.finalScore ?: 0.0
     val meritEarned = entry.submission.evaluation?.meritEarned ?: 0L
     val displayName = entry.user?.name?.ifBlank { null } ?: entry.submission.authorId
@@ -295,7 +292,7 @@ private fun TournamentResultRow(
         }
 
         Text(
-            text = String.format(Locale.US, "%.1f", finalScore),
+            text = FormatUtils.formatScore(finalScore),
             modifier = Modifier.width(60.dp),
             color = Color.White,
             fontWeight = FontWeight.Bold,
@@ -303,7 +300,7 @@ private fun TournamentResultRow(
         )
 
         Text(
-            text = formatter.format(meritEarned),
+            text = FormatUtils.formatMerit(meritEarned),
             modifier = Modifier.width(55.dp),
             color = primaryGold,
             fontWeight = FontWeight.Black,
@@ -421,13 +418,13 @@ private fun TournamentSubmissionBottomSheet(
             ) {
                 InfoMiniBlock(
                     label = "ACCURACY",
-                    value = String.format(Locale.US, "%.2f%%", evaluation?.finalScore ?: 0.0),
+                    value = FormatUtils.formatPercentage(evaluation?.finalScore ?: 0.0),
                     modifier = Modifier.weight(1f),
                     primaryGold = primaryGold
                 )
                 InfoMiniBlock(
                     label = "MERIT EARNED",
-                    value = (evaluation?.meritEarned ?: 0L).toString(),
+                    value = FormatUtils.formatMerit(evaluation?.meritEarned ?: 0L),
                     modifier = Modifier.weight(1f),
                     primaryGold = primaryGold
                 )
@@ -456,7 +453,7 @@ private fun TournamentSubmissionBottomSheet(
                             border = BorderStroke(1.dp, Color.White.copy(alpha = 0.1f)),
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
                         ) {
-                            Text(amount.toString(), fontWeight = FontWeight.Black)
+                            Text(FormatUtils.formatMerit(amount), fontWeight = FontWeight.Black)
                         }
                     }
                 }
@@ -515,7 +512,7 @@ private fun TipAmountDialog(
                             shape = RoundedCornerShape(10.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black)
                         ) {
-                            Text(amount.toString(), fontWeight = FontWeight.Black)
+                            Text(FormatUtils.formatMerit(amount), fontWeight = FontWeight.Black)
                         }
                     }
                 }

@@ -28,6 +28,7 @@ import com.inkr8.data.Evaluation
 import com.inkr8.data.SubmissionStatus
 import com.inkr8.data.Submissions
 import com.inkr8.ui.theme.Inkr8Theme
+import com.inkr8.utils.FormatUtils
 
 private val previewSubmission = Submissions(
     id = "preview-submission",
@@ -129,7 +130,7 @@ fun Results(
 
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = "%.2f".format(evaluation.finalScore) + "%",
+                text = FormatUtils.formatPercentage(evaluation.finalScore),
                 fontSize = 76.sp,
                 color = Color.White,
                 fontWeight = FontWeight.Black,
@@ -231,8 +232,8 @@ fun Results(
                     val opponentLabel = if (matchResult.opponentId == "GHOST") {
                         "Unmatched — compared against rolling average."
                     } else {
-                        "You scored ${"%.1f".format(submission.evaluation?.finalScore ?: 0.0)}. " +
-                        "${matchResult.opponentName} scored ${"%.1f".format(matchResult.opponentScore)}. " +
+                        "You scored ${FormatUtils.formatScore(submission.evaluation?.finalScore ?: 0.0)}. " +
+                        "${matchResult.opponentName} scored ${FormatUtils.formatScore(matchResult.opponentScore)}. " +
                         "You $outcomeLabel."
                     }
 

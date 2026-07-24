@@ -24,8 +24,7 @@ import com.inkr8.data.Users
 import com.inkr8.economy.EconomyConfig.insufficientMerit
 import com.inkr8.economy.TournamentEconomyCalculator
 import com.inkr8.ui.theme.Inkr8Theme
-import java.text.NumberFormat
-import java.util.Locale
+import com.inkr8.utils.FormatUtils
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,7 +34,6 @@ fun CreateTournamentScreen(
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
-    val formatter = remember { NumberFormat.getNumberInstance(Locale.US) }
 
     var title by remember { mutableStateOf("") }
     var gamemode by remember { mutableStateOf("STANDARD") }
@@ -264,7 +262,7 @@ fun CreateTournamentScreen(
                     Column {
                         Text("Entry Fee", color = Color.Gray, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                         Text(
-                            text = "${formatter.format(displayedEntryFee)}",
+                            text = FormatUtils.formatMerit(displayedEntryFee),
                             color = Color.White,
                             fontSize = 28.sp,
                             fontWeight = FontWeight.Black
@@ -273,7 +271,7 @@ fun CreateTournamentScreen(
                     Column(horizontalAlignment = Alignment.End) {
                         Text("System Fee", color = Color.Gray, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                         Text(
-                            text = "${formatter.format(displayedSystemFee)}",
+                            text = FormatUtils.formatMerit(displayedSystemFee),
                             color = Color.White,
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold
@@ -289,12 +287,12 @@ fun CreateTournamentScreen(
                 ) {
                     EconomyStatBlock(
                         label = "Prize Pool",
-                        value = formatter.format(displayedPrizePool),
+                        value = FormatUtils.formatMerit(displayedPrizePool),
                         primaryGold = primaryGold
                     )
                     EconomyStatBlock(
                         label = "Total Cost",
-                        value = formatter.format(totalCost),
+                        value = FormatUtils.formatMerit(totalCost),
                         primaryGold = primaryGold
                     )
                 }
@@ -328,7 +326,7 @@ fun CreateTournamentScreen(
             colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black)
         ) {
             Text(
-                text = "INITIALIZE ARENA • ${formatter.format(totalCost)} Merit",
+                text = "INITIALIZE ARENA • ${FormatUtils.formatMerit(totalCost)} Merit",
                 fontWeight = FontWeight.Black,
                 letterSpacing = 1.sp
             )

@@ -36,8 +36,6 @@ import coil.compose.AsyncImage
 import com.inkr8.R
 import com.inkr8.data.Tournament
 import com.inkr8.data.TournamentStatus
-import java.text.NumberFormat
-import java.util.Locale
 
 @Composable
 fun TournamentCard(
@@ -64,7 +62,7 @@ fun TournamentCard(
         TournamentStatus.CANCELLED -> "DIRECTIVE ABORTED"
     }
 
-    val formattedPrizePool = NumberFormat.getNumberInstance(Locale.US).format(tournament.prizePool)
+    val formattedPrizePool = FormatUtils.formatMerit(tournament.prizePool)
 
     Card(
         modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).clickable(onClick = onClick),

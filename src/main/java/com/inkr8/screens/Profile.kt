@@ -31,9 +31,7 @@ import com.inkr8.data.Users
 import com.inkr8.economy.EconomyConfig
 import com.inkr8.rating.League
 import com.inkr8.ui.theme.Inkr8Theme
-import com.inkr8.utils.TimeUtils.formatTime
-import java.text.NumberFormat
-import java.util.Locale
+import com.inkr8.utils.FormatUtils
 
 @Composable
 fun Profile(
@@ -83,7 +81,7 @@ fun Profile(
             onDismissRequest = { showChangeUsernameDialog = false },
             containerColor = surfaceDark,
             title = { Text("Rebrand Identity", color = Color.White) },
-            text = { Text("Changing your username will cost ${EconomyConfig.CHANGE_USERNAME} Merit. Continue?", color = Color.Gray) },
+            text = { Text("Changing your username will cost ${FormatUtils.formatMerit(EconomyConfig.CHANGE_USERNAME.toLong())} Merit. Continue?", color = Color.Gray) },
             confirmButton = {
                 TextButton(onClick = { showChangeUsernameDialog = false; onChangeUsername() }) {
                     Text("Continue", color = primaryGold, fontWeight = FontWeight.Bold)
@@ -101,8 +99,8 @@ fun Profile(
             title = { Text("Expand Merit Cap", color = primaryGold, fontWeight = FontWeight.Black) },
             text = { 
                 Column {
-                    Text("Current Cap: ${NumberFormat.getNumberInstance(Locale.US).format(user.meritCap)}", color = Color.White)
-                    Text("Expansion Cost: ${NumberFormat.getNumberInstance(Locale.US).format(expandCost)} Merit", color = primaryGold, fontWeight = FontWeight.Bold)
+                    Text("Current Cap: ${FormatUtils.formatMerit(user.meritCap)}", color = Color.White)
+                    Text("Expansion Cost: ${FormatUtils.formatMerit(expandCost)} Merit", color = primaryGold, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(8.dp))
                     Text("This will increase your liquid capacity by 10,000 merit. Extra earnings are currently stored in SRR (Hold).", color = Color.Gray, fontSize = 12.sp)
                 }
@@ -182,7 +180,7 @@ fun Profile(
                 }
                 
                 Text(
-                    text = "Member since ${formatTime(user.joinedDate)}",
+                    text = "Member since ${FormatUtils.formatDate(user.joinedDate)}",
                     style = MaterialTheme.typography.labelSmall,
                     color = Color.DarkGray,
                     letterSpacing = 1.sp
@@ -207,9 +205,9 @@ fun Profile(
                             Text("Liquid Merit", color = Color.Gray, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                             val isDebt = user.merit < 0
                             val meritText = if (isDebt) {
-                                "-${NumberFormat.getNumberInstance(Locale.US).format(java.lang.Math.abs(user.merit))}"
+                                "-${FormatUtils.formatMerit(java.lang.Math.abs(user.merit))}"
                             } else {
-                                NumberFormat.getNumberInstance(Locale.US).format(user.merit)
+                                FormatUtils.formatMerit(user.merit)
                             }
                             Text(
                                 text = meritText,
@@ -244,7 +242,7 @@ fun Profile(
                             modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text("Capacity: ${NumberFormat.getNumberInstance(Locale.US).format(user.meritCap)}", color = Color.DarkGray, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                            Text("Capacity: ${FormatUtils.formatMerit(user.meritCap)}", color = Color.DarkGray, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                             Text("${(progress * 100).toInt()}%", color = Color.DarkGray, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                         }
                     }
@@ -258,7 +256,7 @@ fun Profile(
                     ) {
                         Text("System Tax (Weekly)", color = Color.DarkGray, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                         Text(
-                            text = "${NumberFormat.getNumberInstance(Locale.US).format(weeklyTax)} Merit",
+                            text = "${FormatUtils.formatMerit(weeklyTax)} Merit",
                             color = Color.Gray,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Black
@@ -274,7 +272,7 @@ fun Profile(
                             Column(modifier = Modifier.weight(1f)) {
                                 Text("SRR (HOLD)", color = primaryGold.copy(alpha = 0.6f), fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                                 Text(
-                                    text = NumberFormat.getNumberInstance(Locale.US).format(user.meritHold),
+                                    text = FormatUtils.formatMerit(user.meritHold),
                                     color = Color.White,
                                     fontSize = 18.sp,
                                     fontWeight = FontWeight.Bold
@@ -326,7 +324,7 @@ fun Profile(
             BattleStatSmall(Modifier.weight(1f), "Submissions", user.submissionsCount.toString())
             BattleStatSmall(Modifier.weight(1f), "Tournaments", user.tournamentsPlayed.toString())
             BattleStatSmall(Modifier.weight(1f), "Victories", user.tournamentsWon.toString())
-            BattleStatSmall(Modifier.weight(1f), "Best Score", "${user.bestScore}%")
+            BattleStatSmall(Modifier.weight(1f), "Best Score", FormatUtils.formatPercentage(user.bestScore))
         }
         
         Text(
@@ -416,7 +414,7 @@ fun Profile(
                         colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = 0.05f)),
                         border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
                     ) {
-                        Text("Reveal Reputation • ${EconomyConfig.PURCHASE_REPUTATION_VIEW} Merit", color = Color.White, fontWeight = FontWeight.Black, fontSize = 11.sp)
+                        Text("Reveal Reputation • ${FormatUtils.formatMerit(EconomyConfig.PURCHASE_REPUTATION_VIEW.toLong())} Merit", color = Color.White, fontWeight = FontWeight.Black, fontSize = 11.sp)
                     }
                 }
             }
@@ -651,7 +649,7 @@ private fun TipOptionButton(amount: Long, onClick: (Long) -> Unit) {
         modifier = Modifier.width(80.dp),
         contentPadding = PaddingValues(0.dp)
     ) {
-        Text(amount.toString(), fontWeight = FontWeight.Black)
+        Text(FormatUtils.formatMerit(amount), fontWeight = FontWeight.Black)
     }
 }
 

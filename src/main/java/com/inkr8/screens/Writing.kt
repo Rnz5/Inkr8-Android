@@ -86,20 +86,26 @@ fun Writing(
         }
     }
 
-    val wordCount = remember(userText) {
-        if (userText.isBlank()) 0 else userText.trim().split("\\s+".toRegex()).size
+    val wordCount by remember {
+        derivedStateOf {
+            if (userText.isBlank()) 0 else userText.trim().split("\\s+".toRegex()).size
+        }
     }
 
-    val normalizedUserWords = remember(userText) {
-        userText.lowercase().split(Regex("\\W+")).filter { it.isNotBlank() }.toSet()
+    val normalizedUserWords by remember {
+        derivedStateOf {
+            userText.lowercase().split(Regex("\\W+")).filter { it.isNotBlank() }.toSet()
+        }
     }
 
-    val canSubmit = remember(userText, selectedWords, gamemode, wordCount) {
-        if (userText.isBlank()) false
-        else {
-            val meetsMinWords = gamemode.minWords?.let { wordCount >= it } ?: true
-            val meetsMaxWords = gamemode.maxWords?.let { wordCount <= it } ?: true
-            meetsMinWords && meetsMaxWords
+    val canSubmit by remember {
+        derivedStateOf {
+            if (userText.isBlank()) false
+            else {
+                val meetsMinWords = gamemode.minWords?.let { wordCount >= it } ?: true
+                val meetsMaxWords = gamemode.maxWords?.let { wordCount <= it } ?: true
+                meetsMinWords && meetsMaxWords
+            }
         }
     }
 
