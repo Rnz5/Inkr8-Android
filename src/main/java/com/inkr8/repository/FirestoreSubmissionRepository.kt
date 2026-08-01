@@ -9,11 +9,12 @@ import com.inkr8.AuthManager
 import com.inkr8.data.Submissions
 import com.inkr8.mappers.toDomain
 import com.inkr8.mappers.toFirestore
+import com.inkr8.utils.SystemConfig
 
 class FirestoreSubmissionRepository() {
     private val db = FirebaseFirestore.getInstance()
-    private val submissionsCollection  = db.collection("submissions")
-    private val usersCollection = db.collection("users")
+    private val submissionsCollection  = db.collection(SystemConfig.SUBMISSIONS_COLLECTION)
+    private val usersCollection = db.collection(SystemConfig.USERS_COLLECTION)
 
     fun addSubmission(
         submission: Submissions,
@@ -39,12 +40,12 @@ class FirestoreSubmissionRepository() {
         onError: (Exception) -> Unit
     ) {
         val data = hashMapOf(
-            "action" to "SAVE_SUBMISSION",
+            "action" to SystemConfig.ACTION_SAVE_SUBMISSION,
             "submissionId" to submissionId
         )
 
         Firebase.functions
-            .getHttpsCallable("applyMeritAction")
+            .getHttpsCallable(SystemConfig.APPLY_MERIT_ACTION)
             .call(data)
             .addOnSuccessListener { onSuccess() }
             .addOnFailureListener { onError(it) }

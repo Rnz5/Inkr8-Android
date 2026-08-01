@@ -40,6 +40,7 @@ import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.google.firebase.analytics.FirebaseAnalytics
+import com.inkr8.utils.SystemConfig
 import kotlinx.coroutines.delay
 
 @Composable
@@ -132,7 +133,7 @@ private fun LargeInlineBannerBlock() {
         factory = {
             AdView(it).apply {
                 setAdSize(adSize)
-                adUnitId = "ca-app-pub-3940256099942544/6300978111"
+                adUnitId = SystemConfig.BANNER_AD_UNIT_ID
                 loadAd(AdRequest.Builder().build())
             }
         }

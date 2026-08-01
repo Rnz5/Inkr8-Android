@@ -7,6 +7,7 @@ import com.google.firebase.firestore.QuerySnapshot
 import com.inkr8.data.Users
 import com.google.firebase.functions.FirebaseFunctions
 import com.inkr8.rating.League
+import com.inkr8.utils.SystemConfig
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -16,7 +17,7 @@ class UserRepository(
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
 ) {
 
-    private val usersCollection = firestore.collection("users")
+    private val usersCollection = firestore.collection(SystemConfig.USERS_COLLECTION)
 
     companion object {
         @Volatile
@@ -42,7 +43,7 @@ class UserRepository(
     }
 
     fun getAllUsers(onResult: (List<Users>) -> Unit) {
-        firestore.collection("users")
+        usersCollection
             .get()
             .addOnSuccessListener { snapshot ->
                 val users = snapshot.toObjects(Users::class.java)
@@ -51,7 +52,7 @@ class UserRepository(
     }
 
     fun getLeagueCounts(onResult: (Map<League, Int>) -> Unit) {
-        firestore.collection("metadata").document("rankings")
+        firestore.collection(SystemConfig.METADATA_COLLECTION).document("rankings")
             .get()
             .addOnSuccessListener { snapshot ->
                 val counts = mutableMapOf<League, Int>()
@@ -159,7 +160,7 @@ class UserRepository(
         }
 
         val normalized = normalizeUsername(username)
-        val usernameRef = firestore.collection("usernames").document(normalized)
+        val usernameRef = firestore.collection(SystemConfig.USERNAMES_COLLECTION).document(normalized)
         val userRef = usersCollection.document(userId)
 
         firestore.runTransaction { transaction ->
@@ -204,7 +205,7 @@ class UserRepository(
     ) {
         val normalized = username.trim().lowercase()
 
-        firestore.collection("usernames")
+        firestore.collection(SystemConfig.USERNAMES_COLLECTION)
             .document(normalized)
             .get()
             .addOnSuccessListener { snapshot ->
@@ -227,7 +228,7 @@ class UserRepository(
         )
 
         functions
-            .getHttpsCallable("applyMeritAction")
+            .getHttpsCallable(SystemConfig.APPLY_MERIT_ACTION)
             .call(data)
             .addOnSuccessListener { result ->
                 val resData = result.data as? Map<String, Any>
@@ -254,7 +255,7 @@ class UserRepository(
             val username = snapshot.getString("name") ?: ""
             val normalized = username.lowercase()
 
-            val usernameRef = firestore.collection("usernames").document(normalized)
+            val usernameRef = firestore.collection(SystemConfig.USERNAMES_COLLECTION).document(normalized)
 
             transaction.delete(usernameRef)
 
@@ -277,7 +278,7 @@ class UserRepository(
         )
 
         functions
-            .getHttpsCallable("applyMeritAction")
+            .getHttpsCallable(SystemConfig.APPLY_MERIT_ACTION)
             .call(data)
             .addOnSuccessListener { result ->
                 val resData = result.data as? Map<String, Any>
@@ -325,7 +326,7 @@ class UserRepository(
             "rankedLossStreak" to lossStreak
         )
 
-        firestore.collection("users").document(userId).update(updates)
+        usersCollection.document(userId).update(updates)
     }
 
     fun getTop100Users(
@@ -340,7 +341,7 @@ class UserRepository(
             }
         }
 
-        firestore.collection("users").orderBy("rating", Query.Direction.DESCENDING).limit(100).get().addOnSuccessListener {
+        usersCollection.orderBy("rating", Query.Direction.DESCENDING).limit(100).get().addOnSuccessListener {
             snapshot ->
                 val users = snapshot.documents.mapNotNull { it.toObject(Users::class.java) }
                 synchronized(cacheLock) {
@@ -379,7 +380,7 @@ class UserRepository(
         }
 
         val tasks = distinctIds.chunked(30).map { chunk ->
-            firestore.collection("users").whereIn("id", chunk).get()
+            usersCollection.whereIn("id", chunk).get()
         }
 
         Tasks.whenAllSuccess<QuerySnapshot>(tasks)
@@ -411,7 +412,7 @@ class UserRepository(
         )
 
         functions
-            .getHttpsCallable("activatePhilosopherStatus")
+            .getHttpsCallable(SystemConfig.ACTIVATE_PHILOSOPHER_STATUS)
             .call(data)
             .addOnSuccessListener { result ->
                 val resData = result.data as? Map<String, Any>

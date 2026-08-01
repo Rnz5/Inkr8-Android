@@ -10,6 +10,7 @@ import com.inkr8.AdManager
 import com.inkr8.data.*
 import com.inkr8.repository.*
 import com.inkr8.rating.*
+import com.inkr8.utils.SystemConfig
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest

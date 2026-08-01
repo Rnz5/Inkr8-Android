@@ -2,6 +2,7 @@ package com.inkr8.repository
 
 import com.google.firebase.firestore.FirebaseFirestore
 import com.inkr8.data.Words
+import com.inkr8.utils.SystemConfig
 import kotlinx.coroutines.tasks.await
 import kotlin.random.Random
 
@@ -9,7 +10,7 @@ class WordRepository(
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
 ) {
 
-    private val wordsCollection = firestore.collection("words")
+    private val wordsCollection = firestore.collection(SystemConfig.WORDS_COLLECTION)
 
     suspend fun getRandomWords(limit: Long): List<Words> {
         val randomOffset = Random.nextDouble()
@@ -50,7 +51,7 @@ class WordRepository(
     suspend fun getWordsByTexts(wordTexts: List<String>): List<Words> {
         if (wordTexts.isEmpty()) return emptyList()
 
-        val snapshot = firestore.collection("words")
+        val snapshot = wordsCollection
             .whereIn("word", wordTexts)
             .get()
             .await()

@@ -2,6 +2,7 @@ package com.inkr8.repository
 
 import com.google.firebase.firestore.FirebaseFirestore
 import com.inkr8.data.Topic
+import com.inkr8.utils.SystemConfig
 import kotlinx.coroutines.tasks.await
 import kotlin.random.Random
 
@@ -9,7 +10,7 @@ class TopicRepository(
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
 ) {
 
-    private val topicsCollection = firestore.collection("topics")
+    private val topicsCollection = firestore.collection(SystemConfig.TOPICS_COLLECTION)
 
     suspend fun getRandomTopicFromTheme(themeId: String): Topic? {
         val randomOffset = Random.nextDouble()

@@ -253,7 +253,7 @@ fun HomeScreen(
                             }
                             isSpending = true
                             userRepository.applyMeritAction(
-                                action = "PURCHASE_EXAMPLE_SENTENCE",
+                                action = SystemConfig.ACTION_PURCHASE_EXAMPLE_SENTENCE,
                                 onSuccess = {
                                     showSentence = true
                                     isSpending = false

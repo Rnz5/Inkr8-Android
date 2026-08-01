@@ -12,12 +12,13 @@ import com.inkr8.data.TournamentStatus
 import com.inkr8.economy.EconomyConfig
 import com.inkr8.economy.TournamentEconomyCalculator
 import com.inkr8.timing.TournamentTimingConfig
+import com.inkr8.utils.SystemConfig
 
 
 class FirestoreTournamentRepository {
     private val db = FirebaseFirestore.getInstance()
     private val functions = FirebaseFunctions.getInstance()
-    private val tournamentsCollection = db.collection("tournaments")
+    private val tournamentsCollection = db.collection(SystemConfig.TOURNAMENTS_COLLECTION)
 
     fun createTournament(
         tournament: Tournament,
@@ -28,7 +29,7 @@ class FirestoreTournamentRepository {
         require(tournament.maxPlayers <= 100L)
         require(tournament.prizePool >= 5000L)
 
-        val hostRef = db.collection("users").document(tournament.creatorId)
+        val hostRef = db.collection(SystemConfig.USERS_COLLECTION).document(tournament.creatorId)
         val tournamentRef = tournamentsCollection.document(tournament.id)
 
         db.runTransaction { transaction ->
@@ -79,7 +80,7 @@ class FirestoreTournamentRepository {
         val tournamentRef = tournamentsCollection.document(tournamentId)
         val enrollmentRef = tournamentRef.collection("enrollments").document(userId)
 
-        val userRef = db.collection("users").document(userId)
+        val userRef = db.collection(SystemConfig.USERS_COLLECTION).document(userId)
 
         db.runTransaction { transaction ->
 
@@ -136,7 +137,7 @@ class FirestoreTournamentRepository {
         onError: (Exception) -> Unit
     ) {
         val tournamentRef = tournamentsCollection.document(tournamentId)
-        val tournamentSubmissionRef = tournamentRef.collection("submissions").document(userId)
+        val tournamentSubmissionRef = tournamentRef.collection(SystemConfig.SUBMISSIONS_COLLECTION).document(userId)
         val enrollmentRef = tournamentRef.collection("enrollments").document(userId)
 
         db.runTransaction { transaction ->
@@ -182,9 +183,9 @@ class FirestoreTournamentRepository {
         onSuccess: (List<Submissions>) -> Unit,
         onError: (Exception) -> Unit
     ) {
-        db.collection("tournaments")
+        tournamentsCollection
             .document(tournamentId)
-            .collection("submissions")
+            .collection(SystemConfig.SUBMISSIONS_COLLECTION)
             .orderBy("evaluation.rankLeaderboard")
             .get()
             .addOnSuccessListener { snapshot ->
@@ -212,7 +213,7 @@ class FirestoreTournamentRepository {
             "processed" to false
         )
 
-        db.collection("tournaments")
+        tournamentsCollection
             .document(tournamentId)
             .collection("tips")
             .document(tipId)
@@ -276,7 +277,7 @@ class FirestoreTournamentRepository {
         )
 
         functions
-            .getHttpsCallable("enrollInTournament")
+            .getHttpsCallable(SystemConfig.ENROLL_IN_TOURNAMENT)
             .call(data)
             .addOnSuccessListener {
                 onSuccess()
@@ -340,7 +341,7 @@ class FirestoreTournamentRepository {
     ): ListenerRegistration {
         return tournamentsCollection
             .document(tournamentId)
-            .collection("submissions")
+            .collection(SystemConfig.SUBMISSIONS_COLLECTION)
             .document(userId)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
@@ -368,7 +369,7 @@ class FirestoreTournamentRepository {
         )
 
         Firebase.functions
-            .getHttpsCallable("createUserTournament")
+            .getHttpsCallable(SystemConfig.CREATE_USER_TOURNAMENT)
             .call(data)
             .addOnSuccessListener { onSuccess() }
             .addOnFailureListener { e ->

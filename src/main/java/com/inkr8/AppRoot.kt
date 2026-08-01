@@ -19,6 +19,7 @@ import com.inkr8.rating.*
 import com.inkr8.viewmodel.AppViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import com.inkr8.utils.SystemConfig
 
 @Suppress("UNCHECKED_CAST")
 class AppViewModelFactory(private val initialUser: Users) : ViewModelProvider.Factory {
@@ -138,12 +139,12 @@ fun AppRoot(
             },
             onChangeUsername = { viewModel.navigateTo(Screen.usernameSetup) },
             onPurchaseReputation = { onSuccess ->
-                viewModel.applyMeritAction("PURCHASE_REPUTATION_VIEW", onSuccess) { error ->
+                viewModel.applyMeritAction(SystemConfig.ACTION_PURCHASE_REPUTATION, onSuccess) { error ->
                     Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
                 }
             },
             onExpandCap = {
-                viewModel.applyMeritAction("EXPAND_MERIT_CAP", {
+                viewModel.applyMeritAction(SystemConfig.ACTION_EXPAND_MERIT_CAP, {
                     Toast.makeText(context, "Cap Expanded", Toast.LENGTH_SHORT).show()
                 }) { error ->
                     Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
@@ -279,7 +280,7 @@ fun AppRoot(
                     onDeleteAccount = {},
                     onChangeUsername = {},
                     onPurchaseReputation = { onSuccess ->
-                        viewModel.applyMeritAction("PURCHASE_REPUTATION_VIEW", onSuccess) { error ->
+                        viewModel.applyMeritAction(SystemConfig.ACTION_PURCHASE_REPUTATION, onSuccess) { error ->
                             Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
                         }
                     },

@@ -2,6 +2,7 @@ package com.inkr8.repository
 
 import com.google.firebase.firestore.FirebaseFirestore
 import com.inkr8.data.Theme
+import com.inkr8.utils.SystemConfig
 import kotlinx.coroutines.tasks.await
 import kotlin.random.Random
 
@@ -9,7 +10,7 @@ class ThemeRepository(
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
 ) {
 
-    private val themesCollection = firestore.collection("themes")
+    private val themesCollection = firestore.collection(SystemConfig.THEMES_COLLECTION)
 
     suspend fun getRandomTheme(): Theme? {
         val randomOffset = Random.nextDouble()
