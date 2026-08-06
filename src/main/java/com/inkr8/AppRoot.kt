@@ -41,7 +41,13 @@ fun AppRoot(
     val context = LocalContext.current
     val activity = LocalActivity.current
 
-    when(viewModel.currentScreen) {
+    val effectiveScreen = if (viewModel.isPlacementRevealRequired) {
+        Screen.placementReveal
+    } else {
+        viewModel.currentScreen
+    }
+
+    when(effectiveScreen) {
         Screen.home -> MainPagerScreen(
             user = viewModel.currentUser,
             pantheonPosition = viewModel.pantheonPosition,

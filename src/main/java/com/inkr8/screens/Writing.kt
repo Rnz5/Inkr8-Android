@@ -30,6 +30,8 @@ import com.google.firebase.analytics.FirebaseAnalytics
 import androidx.compose.ui.platform.LocalContext
 import com.google.firebase.analytics.logEvent
 import com.inkr8.utils.ValidationUtils
+import com.inkr8.utils.DraftManager
+import kotlinx.coroutines.delay
 
 @Composable
 fun Writing(
@@ -40,9 +42,23 @@ fun Writing(
     onNavigateBack: () -> Unit,
     onNavigateToResults: () -> Unit
 ) {
+    val context = LocalContext.current
     val wordRepository = remember { WordRepository() }
     val analyticsContext = LocalContext.current
     val firebaseAnalytics = remember { FirebaseAnalytics.getInstance(analyticsContext) }
+
+    val draftKey = remember(gamemode, playMode, tournamentContext) {
+        val gModeStr = when(gamemode) {
+            is StandardWriting -> "STANDARD"
+            is OnTopicWriting -> "ON_TOPIC"
+        }
+        val pModeStr = when(playMode) {
+            PlayMode.Practice -> "PRACTICE"
+            PlayMode.Ranked -> "RANKED"
+            is PlayMode.Tournament -> "TOURNAMENT"
+        }
+        DraftManager.getDraftKey(gModeStr, pModeStr, tournamentContext?.id)
+    }
 
     LaunchedEffect(gamemode, playMode) {
         firebaseAnalytics.logEvent("writing_started") {
@@ -62,7 +78,19 @@ fun Writing(
     var selectedWordForDialog by remember { mutableStateOf<Words?>(null) }
     var selectedThemeForDialog by remember { mutableStateOf<Theme?>(null) }
     var selectedTopicForDialog by remember { mutableStateOf<Topic?>(null) }
-    var userText by remember { mutableStateOf("") }
+    
+    // Initialize userText from Draft
+    var userText by remember { 
+        mutableStateOf(DraftManager.getDraft(context, draftKey)) 
+    }
+    
+    // Periodic Auto-save
+    LaunchedEffect(userText) {
+        if (userText.isNotBlank()) {
+            delay(3000) // Debounce/Delay save to avoid excessive IO
+            DraftManager.saveDraft(context, draftKey, userText)
+        }
+    }
     
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -314,6 +342,10 @@ fun Writing(
                                 topicId = if (gamemode is OnTopicWriting) gamemode.topic.id else null,
                                 themeId = if (gamemode is OnTopicWriting) gamemode.theme.id else null,
                             )
+                            
+                            // Clear Draft on successful submission
+                            DraftManager.clearDraft(context, draftKey)
+
                             onAddSubmission(submission)
                             userText = ""
                         }

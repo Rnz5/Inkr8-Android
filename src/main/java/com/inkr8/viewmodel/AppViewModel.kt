@@ -23,7 +23,6 @@ class AppViewModel(
     private val userRepository: UserRepository = UserRepository()
 ) : ViewModel() {
 
-    // --- State ---
     var currentUser by mutableStateOf(initialUser)
         private set
 
@@ -48,6 +47,10 @@ class AppViewModel(
     var pendingNavigationAfterAd by mutableStateOf<Screen?>(null)
     
     private var previousUserIsPlaced = initialUser.isPlaced
+
+    val isPlacementRevealRequired by derivedStateOf {
+        currentUser.isPlaced && !currentUser.hasSeenPlacementReveal
+    }
 
     // Loading screen state
     var loadingResolved by mutableStateOf(false)
@@ -86,8 +89,6 @@ class AppViewModel(
             }
         }
     }
-
-    // --- Actions ---
 
     fun navigateTo(screen: Screen, page: Int? = null) {
         page?.let { pagerInitialPage = it }
