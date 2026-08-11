@@ -41,6 +41,7 @@ fun AppRoot(
     val context = LocalContext.current
     val activity = LocalActivity.current
 
+    // Force Placement Reveal if required, regardless of the current navigation state.
     val effectiveScreen = if (viewModel.isPlacementRevealRequired) {
         Screen.placementReveal
     } else {
@@ -127,10 +128,17 @@ fun AppRoot(
             onNavigateBack = { viewModel.navigateTo(Screen.home, page = 1) },
             onNavigateToSubmissions = { viewModel.navigateTo(Screen.submissions) },
             onNavigateToSavedSubmissions = { viewModel.navigateTo(Screen.savedSubmissions) },
-            onLinkGoogle = {
-                val signInIntent = AuthManager.getGoogleSignInIntent()
-                googleLauncher.launch(signInIntent)
-            },
+            onNavigateToSettings = { viewModel.navigateTo(Screen.settings) },
+            onPurchaseReputation = { onSuccess ->
+                viewModel.applyMeritAction(SystemConfig.ACTION_PURCHASE_REPUTATION, onSuccess) { error ->
+                    Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+                }
+            }
+        )
+
+        Screen.settings -> Settings(
+            user = viewModel.currentUser,
+            onNavigateBack = { viewModel.navigateTo(Screen.profile) },
             onLogout = {
                 AuthManager.signOut()
                 onSessionEnded()
@@ -144,11 +152,6 @@ fun AppRoot(
                 }
             },
             onChangeUsername = { viewModel.navigateTo(Screen.usernameSetup) },
-            onPurchaseReputation = { onSuccess ->
-                viewModel.applyMeritAction(SystemConfig.ACTION_PURCHASE_REPUTATION, onSuccess) { error ->
-                    Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
-                }
-            },
             onExpandCap = {
                 viewModel.applyMeritAction(SystemConfig.ACTION_EXPAND_MERIT_CAP, {
                     Toast.makeText(context, "Cap Expanded", Toast.LENGTH_SHORT).show()
@@ -281,21 +284,15 @@ fun AppRoot(
                     onNavigateBack = { viewModel.navigateTo(Screen.home, page = 2) },
                     onNavigateToSubmissions = { viewModel.navigateTo(Screen.submissions) },
                     onNavigateToSavedSubmissions = { viewModel.navigateTo(Screen.savedSubmissions) },
-                    onLinkGoogle = {},
-                    onLogout = {},
-                    onDeleteAccount = {},
-                    onChangeUsername = {},
+                    onNavigateToSettings = { viewModel.navigateTo(Screen.settings) },
                     onPurchaseReputation = { onSuccess ->
                         viewModel.applyMeritAction(SystemConfig.ACTION_PURCHASE_REPUTATION, onSuccess) { error ->
                             Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
                         }
-                    },
-                    onExpandCap = {}
+                    }
                 )
             } else {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Loading profile...")
-                }
+                InitialLoadingScreen()
             }
         }
 
@@ -366,7 +363,7 @@ fun AppRoot(
             errorMessage = null,
             onSubmit = { newName ->
                 viewModel.changeUsername(newName, {
-                    viewModel.navigateTo(Screen.profile)
+                    viewModel.navigateTo(Screen.settings) // Return to settings after name change
                 }) { error ->
                     Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
                 }

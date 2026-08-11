@@ -41,81 +41,18 @@ fun Profile(
     onNavigateBack: () -> Unit,
     onNavigateToSubmissions: () -> Unit,
     onNavigateToSavedSubmissions: () -> Unit,
-    onLinkGoogle: () -> Unit,
-    onLogout: () -> Unit,
-    onDeleteAccount: () -> Unit,
-    onChangeUsername: () -> Unit,
+    onNavigateToSettings: () -> Unit,
     onPurchaseReputation: (onSuccess: () -> Unit) -> Unit,
-    onExpandCap: () -> Unit,
     onTip: (Long) -> Unit = {}
 ) {
     val league = League.fromRating(user.rating)
     val scrollState = rememberScrollState()
-    var showDeleteDialog by remember { mutableStateOf(false) }
-    var showChangeUsernameDialog by remember { mutableStateOf(false) }
-    var showExpandCapDialog by remember { mutableStateOf(false) }
     var showTipDialog by remember { mutableStateOf(false) }
     var isReputationRevealed by remember { mutableStateOf(false) }
 
     val primaryGold = Color(0xFFFFD700)
     val backgroundDark = Color(0xFF0F0F0F)
     val surfaceDark = Color(0xFF1A1A1A)
-
-    if (showDeleteDialog) {
-        AlertDialog(
-            onDismissRequest = { showDeleteDialog = false },
-            containerColor = surfaceDark,
-            title = { Text("Dissolve Identity", color = Color.White) },
-            text = { Text("This will permanently delete your account and release your username. This action cannot be undone.", color = Color.Gray) },
-            confirmButton = {
-                TextButton(onClick = { showDeleteDialog = false; onDeleteAccount() }) {
-                    Text("Dissolve", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
-                }
-            },
-            dismissButton = { TextButton(onClick = { showDeleteDialog = false }) { Text("Cancel", color = Color.White) } }
-        )
-    }
-
-    if (showChangeUsernameDialog) {
-        AlertDialog(
-            onDismissRequest = { showChangeUsernameDialog = false },
-            containerColor = surfaceDark,
-            title = { Text("Rebrand Identity", color = Color.White) },
-            text = { Text("Changing your username will cost ${FormatUtils.formatMerit(EconomyConfig.CHANGE_USERNAME.toLong())} Merit. Continue?", color = Color.Gray) },
-            confirmButton = {
-                TextButton(onClick = { showChangeUsernameDialog = false; onChangeUsername() }) {
-                    Text("Continue", color = primaryGold, fontWeight = FontWeight.Bold)
-                }
-            },
-            dismissButton = { TextButton(onClick = { showChangeUsernameDialog = false }) { Text("Cancel", color = Color.White) } }
-        )
-    }
-
-    if (showExpandCapDialog) {
-        val expandCost = (user.meritCap * 0.25).toLong()
-        AlertDialog(
-            onDismissRequest = { showExpandCapDialog = false },
-            containerColor = surfaceDark,
-            title = { Text("Expand Merit Cap", color = primaryGold, fontWeight = FontWeight.Black) },
-            text = { 
-                Column {
-                    Text("Current Cap: ${FormatUtils.formatMerit(user.meritCap)}", color = Color.White)
-                    Text("Expansion Cost: ${FormatUtils.formatMerit(expandCost)} Merit", color = primaryGold, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("This will increase your liquid capacity by 10,000 merit. Extra earnings are currently stored in SRR (Hold).", color = Color.Gray, fontSize = 12.sp)
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = { showExpandCapDialog = false; onExpandCap() },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black)
-                ) {
-                    Text("Expand", fontWeight = FontWeight.Black)
-                }
-            },
-            dismissButton = { TextButton(onClick = { showExpandCapDialog = false }) { Text("Cancel", color = Color.White) } }
-        )
-    }
 
     if (showTipDialog) {
         TipAmountDialog(
@@ -134,11 +71,26 @@ fun Profile(
         Box(modifier = Modifier.fillMaxWidth().height(180.dp)) {
             Box(modifier = Modifier.fillMaxSize().background(Color(0xFF0A0A0A)))
             
-            IconButton(
-                onClick = onNavigateBack,
-                modifier = Modifier.padding(16.dp).align(Alignment.TopStart).background(Color.Black.copy(alpha = 0.5f), CircleShape)
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Back", color = Color.White, fontWeight = FontWeight.Bold)
+                IconButton(
+                    onClick = onNavigateBack,
+                    modifier = Modifier.background(Color.Black.copy(alpha = 0.5f), CircleShape)
+                ) {
+                    Text("←", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+
+                if (isOwner) {
+                    IconButton(
+                        onClick = onNavigateToSettings,
+                        modifier = Modifier.background(Color.Black.copy(alpha = 0.5f), CircleShape)
+                    ) {
+                        Text("⚙", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                    }
+                }
             }
         }
 
@@ -148,12 +100,12 @@ fun Profile(
         ) {
             Box(modifier = Modifier.offset(y = (-50).dp)) {
                 AsyncImage(
-                    model = user.profileImageURL.ifEmpty { R.drawable.pfpexample },
+                    model = user.profileImageURL.ifEmpty { R.drawable.defaultpng },
                     contentDescription = null,
                     modifier = Modifier.size(100.dp).clip(CircleShape).border(3.dp, if(user.isPhilosopher) primaryGold else Color(0xFFC0C0C0), CircleShape).background(surfaceDark),
                     contentScale = ContentScale.Crop,
-                    error = painterResource(id = R.drawable.pfpexample),
-                    placeholder = painterResource(id = R.drawable.pfpexample)
+                    error = painterResource(id = R.drawable.defaultpng),
+                    placeholder = painterResource(id = R.drawable.defaultpng)
                 )
             }
 
@@ -215,16 +167,6 @@ fun Profile(
                                 fontSize = 28.sp,
                                 fontWeight = FontWeight.Black
                             )
-                        }
-                        
-                        Button(
-                            onClick = { showExpandCapDialog = true },
-                            colors = ButtonDefaults.buttonColors(containerColor = primaryGold, contentColor = Color.Black),
-                            shape = RoundedCornerShape(8.dp),
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
-                            modifier = Modifier.height(32.dp)
-                        ) {
-                            Text("Expand Cap", fontWeight = FontWeight.Black, fontSize = 10.sp)
                         }
                     }
                     
@@ -415,43 +357,6 @@ fun Profile(
                         border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
                     ) {
                         Text("Reveal Reputation • ${FormatUtils.formatMerit(EconomyConfig.PURCHASE_REPUTATION_VIEW.toLong())} Merit", color = Color.White, fontWeight = FontWeight.Black, fontSize = 11.sp)
-                    }
-                }
-            }
-
-            SectionTitle("Management")
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                OutlinedButton(
-                    onClick = { showChangeUsernameDialog = true },
-                    modifier = Modifier.fillMaxWidth().height(48.dp),
-                    shape = RoundedCornerShape(10.dp),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.1f)),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Gray)
-                ) {
-                    Text("Modify Identity", fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                }
-                
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OutlinedButton(
-                        onClick = onLogout,
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(10.dp),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.05f)),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Gray)
-                    ) {
-                        Text("Logout")
-                    }
-                    OutlinedButton(
-                        onClick = { showDeleteDialog = true },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(10.dp),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, Color.Red.copy(alpha = 0.2f)),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Red.copy(alpha = 0.6f))
-                    ) {
-                        Text("Dissolve")
                     }
                 }
             }
@@ -664,12 +569,8 @@ fun ProfilePreview() {
             onNavigateBack = {},
             onNavigateToSubmissions = {},
             onNavigateToSavedSubmissions = {},
-            onLinkGoogle = {},
-            onLogout = {},
-            onDeleteAccount = {},
-            onChangeUsername = {},
-            onPurchaseReputation = {},
-            onExpandCap = {}
+            onNavigateToSettings = {},
+            onPurchaseReputation = {}
         )
     }
 }

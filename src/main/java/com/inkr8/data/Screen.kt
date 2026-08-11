@@ -18,5 +18,6 @@ enum class Screen {
     postSubmissionAd,
     paywall,
     usernameSetup,
-    placementReveal
+    placementReveal,
+    settings
 }

@@ -19,6 +19,7 @@ import com.inkr8.data.Users
 import com.inkr8.repository.UserRepository
 import com.inkr8.screens.LoginScreen
 import com.inkr8.screens.UsernameSetupScreen
+import com.inkr8.screens.InitialLoadingScreen
 import com.inkr8.ui.theme.Inkr8Theme
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
@@ -75,12 +76,7 @@ class MainActivity : ComponentActivity() {
 
                 when {
                     isCheckingAuth -> {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text("Loading...")
-                        }
+                        InitialLoadingScreen()
                     }
 
                     currentUser == null -> {

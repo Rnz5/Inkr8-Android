@@ -28,6 +28,11 @@ fun SubmissionsScreen(
     onNavigateToProfile: () -> Unit,
     onSaveSubmission: (String) -> Unit
 ) {
+    if (isLoading) {
+        InitialLoadingScreen()
+        return
+    }
+
     val archiveSubmissions = submissions.filter { !it.isSaved }
     var submissionToSave by remember { mutableStateOf<Submissions?>(null) }
     val totalSavedCount = submissions.count { it.isSaved }
@@ -36,31 +41,33 @@ fun SubmissionsScreen(
         val saveCost = EconomyConfig.getSaveSubmissionCost(totalSavedCount)
         AlertDialog(
             onDismissRequest = { submissionToSave = null },
-            title = { Text("Protect Writing") },
-            text = { Text("Moving this entry to the Eternal Repository will cost $saveCost Merit. It will be removed from the Archive and permanently preserved.") },
+            containerColor = Color(0xFF1A1A1A),
+            title = { Text("Protect Writing", color = Color.White, fontWeight = FontWeight.Black) },
+            text = { Text("Moving this entry to the Eternal Repository will cost ${FormatUtils.formatMerit(saveCost.toLong())} Merit. It will be removed from the Archive and permanently preserved.", color = Color.Gray) },
             confirmButton = {
-                TextButton(
+                Button(
                     onClick = {
                         submissionToSave?.let { onSaveSubmission(it.id) }
                         submissionToSave = null
-                    }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black)
                 ) {
                     Text("Confirm", fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { submissionToSave = null }) {
-                    Text("Cancel")
+                    Text("Cancel", color = Color.White)
                 }
             }
         )
     }
 
     Column(
-        modifier = Modifier.fillMaxSize().background(Color.White).padding(16.dp)
+        modifier = Modifier.fillMaxSize().background(Color(0xFF0F0F0F)).padding(16.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().statusBarsPadding(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -68,32 +75,30 @@ fun SubmissionsScreen(
                 Text(
                     text = "System Archive",
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    letterSpacing = 2.sp
+                    color = Color(0xFFFFD700),
+                    letterSpacing = 2.sp,
+                    fontWeight = FontWeight.Black
                 )
                 Text(
                     text = "Writing History",
                     style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.ExtraBold
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color.White
                 )
             }
             IconButton(
                 onClick = onNavigateToProfile,
-                modifier = Modifier.background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
+                modifier = Modifier.background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(12.dp))
             ) {
-                Text("✕", fontWeight = FontWeight.Bold)
+                Text("✕", color = Color.White, fontWeight = FontWeight.Bold)
             }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        if (isLoading) {
+        if (archiveSubmissions.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-        } else if (archiveSubmissions.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("The archive is empty. Begin your climb.", color = Color.Gray)
+                Text("The archive is empty. Begin your climb.", color = Color.DarkGray, fontWeight = FontWeight.Bold)
             }
         } else {
             Text(
@@ -129,10 +134,11 @@ fun SubmissionItem(
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A)),
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.05f))
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(20.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -140,12 +146,14 @@ fun SubmissionItem(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = submission.gamemode,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                        text = submission.gamemode.uppercase(),
+                        fontWeight = FontWeight.Black,
+                        color = Color(0xFFFFD700),
+                        fontSize = 11.sp,
+                        letterSpacing = 1.sp
                     )
                     Text(
-                        text = FormatUtils.formatDate(submission.timestamp) + " " + FormatUtils.formatTime(submission.timestamp),
+                        text = FormatUtils.formatDate(submission.timestamp),
                         style = MaterialTheme.typography.labelSmall,
                         color = Color.Gray
                     )
@@ -154,41 +162,39 @@ fun SubmissionItem(
                 val score = submission.evaluation?.finalScore ?: 0.0
                 Text(
                     text = FormatUtils.formatPercentage(score),
-                    fontWeight = FontWeight.ExtraBold,
+                    fontWeight = FontWeight.Black,
                     fontSize = 24.sp,
-                    color = when {
-                        score >= 80 -> Color(0xFF4CAF50)
-                        score >= 60 -> Color(0xFFFFC107)
-                        else -> Color(0xFFF44336)
-                    }
+                    color = Color.White
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             Text(
                 text = submission.content.let { if (it.length > 150) it.take(150) + "..." else it },
                 style = MaterialTheme.typography.bodyMedium,
-                lineHeight = 20.sp
+                lineHeight = 22.sp,
+                color = Color.LightGray
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    InfoTag("${submission.wordCount} words")
-                }
+                InfoTag("${submission.wordCount} words")
 
-                TextButton(
+                Button(
                     onClick = onSaveClick,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = 0.05f), contentColor = Color.White),
+                    shape = RoundedCornerShape(8.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.1f)),
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
                     modifier = Modifier.height(32.dp)
                 ) {
-                    Text("Save - ${FormatUtils.formatMerit(saveCost.toLong())} Merit", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Text("SAVE • ${FormatUtils.formatMerit(saveCost.toLong())}", fontSize = 9.sp, fontWeight = FontWeight.Black)
                 }
             }
         }
@@ -198,9 +204,14 @@ fun SubmissionItem(
 @Composable
 fun InfoTag(text: String) {
     Box(
-        modifier = Modifier.background(Color.Black.copy(alpha = 0.05f), RoundedCornerShape(4.dp)).padding(horizontal = 6.dp, vertical = 2.dp)
+        modifier = Modifier.background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(4.dp)).padding(horizontal = 8.dp, vertical = 4.dp)
     ) {
-        Text(text = text.uppercase(), fontSize = 9.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
+        Text(
+            text = text,
+            color = Color.Gray,
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Bold
+        )
     }
 }
 

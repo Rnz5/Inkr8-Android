@@ -33,13 +33,15 @@ fun LoadingScreen(
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Medium
                 )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "${elapsedSeconds}s",
-                    color = Color(0xFFFFD700),
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold
-                )
+                if (elapsedSeconds > 0) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "${elapsedSeconds}s",
+                        color = Color(0xFFFFD700),
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         } else {
             Column(
@@ -70,6 +72,39 @@ fun LoadingScreen(
                     Text("Return Home", fontWeight = FontWeight.Bold)
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun InitialLoadingScreen() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF0F0F0F)),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            CircularProgressIndicator(
+                color = Color(0xFFFFD700),
+                strokeWidth = 2.dp,
+                modifier = Modifier.size(40.dp)
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+            Text(
+                text = "INITIALIZING SYSTEM",
+                color = Color.White,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Black,
+                letterSpacing = 3.sp
+            )
+            Text(
+                text = "VERIFYING STANDING",
+                color = Color.Gray,
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.sp
+            )
         }
     }
 }
