@@ -9,126 +9,74 @@ import com.google.firebase.functions.functions
 import com.inkr8.data.Tournament
 import com.inkr8.data.Submissions
 import com.inkr8.data.TournamentStatus
-import com.inkr8.economy.EconomyConfig
-import com.inkr8.economy.TournamentEconomyCalculator
-import com.inkr8.timing.TournamentTimingConfig
 import com.inkr8.utils.SystemConfig
 
-
+/**
+ * Repository for managing Tournament data.
+ * Economy-critical actions (Creation, Enrollment) are handled via Cloud Functions 
+ * to ensure server-side security and prevent Merit manipulation.
+ */
 class FirestoreTournamentRepository {
     private val db = FirebaseFirestore.getInstance()
     private val functions = FirebaseFunctions.getInstance()
     private val tournamentsCollection = db.collection(SystemConfig.TOURNAMENTS_COLLECTION)
 
+    /**
+     * Creates a new user-hosted tournament via Cloud Function.
+     * Merit deduction and escrow are handled server-side.
+     */
     fun createTournament(
-        tournament: Tournament,
+        title: String,
+        gamemode: String,
+        prizePool: Long,
+        maxPlayers: Int,
         onSuccess: () -> Unit,
         onError: (Exception) -> Unit
     ) {
+        val data = hashMapOf(
+            "title" to title,
+            "gamemode" to gamemode,
+            "prizePool" to prizePool,
+            "maxPlayers" to maxPlayers
+        )
 
-        require(tournament.maxPlayers <= 100L)
-        require(tournament.prizePool >= 5000L)
-
-        val hostRef = db.collection(SystemConfig.USERS_COLLECTION).document(tournament.creatorId)
-        val tournamentRef = tournamentsCollection.document(tournament.id)
-
-        db.runTransaction { transaction ->
-
-            val hostSnapshot = transaction.get(hostRef)
-            if (!hostSnapshot.exists()) throw Exception("Host not found")
-
-            val hostMerit = hostSnapshot.getLong("merit") ?: 0L
-            if (hostMerit < tournament.prizePool) {
-                throw Exception("Insufficient merit to fund prize pool")
+        functions
+            .getHttpsCallable(SystemConfig.CREATE_USER_TOURNAMENT)
+            .call(data)
+            .addOnSuccessListener { onSuccess() }
+            .addOnFailureListener { e ->
+                onError(Exception(e.message ?: "Error creating tournament"))
             }
-
-            val projection = TournamentEconomyCalculator.calculateProjection(
-                prizePool = tournament.prizePool,
-                maxPlayers = tournament.maxPlayers.toInt()
-            )
-
-            val now = System.currentTimeMillis()
-            val enrollmentDeadline = now + TournamentTimingConfig.ENROLLMENT_DURATION_MS
-            val submissionDeadline = enrollmentDeadline + TournamentTimingConfig.SUBMISSION_DURATION_MS
-
-            val enrichedTournament = tournament.copy(
-                entranceFee = projection.entranceFee,
-                systemFee = projection.systemFee,
-                status = TournamentStatus.ENROLLING,
-                playersCount = 0,
-                submissionsCount = 0,
-                minPlayers = TournamentTimingConfig.MIN_PLAYERS.toLong(),
-                enrollmentDeadline = enrollmentDeadline,
-                submissionDeadline = submissionDeadline,
-                createdAt = now
-            )
-
-            // deduct host escrow
-            transaction.update(hostRef, "merit", hostMerit - tournament.prizePool)
-
-            transaction.set(tournamentRef, enrichedTournament)
-
-        }.addOnSuccessListener { onSuccess() }.addOnFailureListener { onError(it) }
     }
 
-    fun enrollUser(
+    /**
+     * Enrolls a user in a tournament via Cloud Function.
+     * Merit checks and deductions are handled server-side for security.
+     */
+    fun enrollInTournament(
         tournamentId: String,
-        userId: String,
         onSuccess: () -> Unit,
         onError: (Exception) -> Unit
     ) {
-        val tournamentRef = tournamentsCollection.document(tournamentId)
-        val enrollmentRef = tournamentRef.collection("enrollments").document(userId)
+        val data = hashMapOf(
+            "tournamentId" to tournamentId
+        )
 
-        val userRef = db.collection(SystemConfig.USERS_COLLECTION).document(userId)
-
-        db.runTransaction { transaction ->
-
-            val tournamentSnapshot = transaction.get(tournamentRef)
-            if (!tournamentSnapshot.exists()) {
-                throw Exception("Tournament not found")
+        functions
+            .getHttpsCallable(SystemConfig.ENROLL_IN_TOURNAMENT)
+            .call(data)
+            .addOnSuccessListener {
+                onSuccess()
             }
-
-            val tournament = tournamentSnapshot.toObject(Tournament::class.java)
-                ?: throw Exception("Invalid tournament data")
-
-            if (userId == tournament.creatorId) {
-                throw Exception("Host cannot enroll in their own tournament")
+            .addOnFailureListener { error: Exception ->
+                onError(Exception(error.message ?: "Failed to enroll"))
             }
-
-            if (tournament.status != TournamentStatus.ENROLLING) {
-                throw Exception("Enrollment closed")
-            }
-
-            if (System.currentTimeMillis() > tournament.enrollmentDeadline) {
-                throw Exception("Enrollment period ended")
-            }
-
-            if (tournament.playersCount >= tournament.maxPlayers) {
-                throw Exception("Tournament is full")
-            }
-
-            if (transaction.get(enrollmentRef).exists()) {
-                throw Exception("Already enrolled")
-            }
-
-            val userSnapshot = transaction.get(userRef)
-            if (!userSnapshot.exists()) throw Exception("User not found")
-
-            val currentMerit = userSnapshot.getLong("merit") ?: 0L
-
-            if (currentMerit < tournament.entranceFee) {
-                throw Exception(EconomyConfig.insufficientMerit())
-            }
-
-            transaction.update(userRef, "merit", currentMerit - tournament.entranceFee)
-            transaction.set(enrollmentRef, mapOf("joinedAt" to System.currentTimeMillis()))
-            transaction.update(tournamentRef, "playersCount", tournament.playersCount + 1)
-
-
-        }.addOnSuccessListener { onSuccess() }.addOnFailureListener { onError(it) }
     }
 
+    /**
+     * Submits writing to an active tournament.
+     * This uses a transaction to verify enrollment status before writing the document.
+     */
     fun submitToTournament(
         tournamentId: String,
         userId: String,
@@ -202,7 +150,6 @@ class FirestoreTournamentRepository {
         onSuccess: () -> Unit,
         onError: (Exception) -> Unit
     ) {
-
         val tipId = "${tipperId}_${recipientId}"
 
         val tipData = mapOf(
@@ -221,6 +168,25 @@ class FirestoreTournamentRepository {
             .addOnSuccessListener { onSuccess() }
             .addOnFailureListener { onError(it) }
     }
+
+    fun hasUserTippedInTournament(
+        tournamentId: String,
+        tipperId: String,
+        recipientId: String,
+        onResult: (Boolean) -> Unit
+    ) {
+        val tipId = "${tipperId}_${recipientId}"
+        tournamentsCollection
+            .document(tournamentId)
+            .collection("tips")
+            .document(tipId)
+            .get()
+            .addOnSuccessListener { snapshot ->
+                onResult(snapshot.exists())
+            }
+            .addOnFailureListener { onResult(false) }
+    }
+
     fun listenToTournamentFeed(
         onUpdate: (List<Tournament>) -> Unit,
         onError: (Exception) -> Unit
@@ -264,26 +230,6 @@ class FirestoreTournamentRepository {
                 )
 
                 onUpdate(sorted)
-            }
-    }
-
-    fun enrollUserViaFunction(
-        tournamentId: String,
-        onSuccess: () -> Unit,
-        onError: (Exception) -> Unit
-    ) {
-        val data = hashMapOf(
-            "tournamentId" to tournamentId
-        )
-
-        functions
-            .getHttpsCallable(SystemConfig.ENROLL_IN_TOURNAMENT)
-            .call(data)
-            .addOnSuccessListener {
-                onSuccess()
-            }
-            .addOnFailureListener { error: Exception ->
-                onError(Exception(error.message ?: "Failed to enroll"))
             }
     }
 
@@ -352,30 +298,4 @@ class FirestoreTournamentRepository {
                 onUpdate(snapshot?.exists() == true)
             }
     }
-
-    fun createUserTournament(
-        title: String,
-        gamemode: String,
-        prizePool: Long,
-        maxPlayers: Int,
-        onSuccess: () -> Unit,
-        onError: (Exception) -> Unit
-    ) {
-        val data = hashMapOf(
-            "title" to title,
-            "gamemode" to gamemode,
-            "prizePool" to prizePool,
-            "maxPlayers" to maxPlayers
-        )
-
-        Firebase.functions
-            .getHttpsCallable(SystemConfig.CREATE_USER_TOURNAMENT)
-            .call(data)
-            .addOnSuccessListener { onSuccess() }
-            .addOnFailureListener { e ->
-                onError(Exception(e.message ?: "Error creating tournament"))
-            }
-    }
-
-
 }

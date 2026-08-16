@@ -44,10 +44,6 @@ fun TournamentCard(
     onClick: () -> Unit,
     onHostClick: () -> Unit
 ) {
-    val primaryGold = Color(0xFFFFD700)
-    val surfaceDark = Color(0xFF1A1A1A)
-    val backgroundDark = Color(0xFF0F0F0F)
-
     val targetTime = when (tournament.status) {
         TournamentStatus.ENROLLING -> tournament.enrollmentDeadline
         TournamentStatus.ACTIVE -> tournament.submissionDeadline
@@ -67,7 +63,7 @@ fun TournamentCard(
     Card(
         modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).clickable(onClick = onClick),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = surfaceDark),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondary),
         border = BorderStroke(1.dp, Color.White.copy(alpha = 0.05f))
     ) {
         Column(
@@ -82,7 +78,7 @@ fun TournamentCard(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = "Tournament",
-                        color = primaryGold.copy(alpha = 0.6f),
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
                         fontSize = 9.sp,
                         fontWeight = FontWeight.Black,
                         letterSpacing = 2.sp
@@ -108,7 +104,7 @@ fun TournamentCard(
                         text = formattedPrizePool,
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Black,
-                        color = primaryGold,
+                        color = MaterialTheme.colorScheme.primary,
                         letterSpacing = (-0.5).sp
                     )
                 }
@@ -123,7 +119,7 @@ fun TournamentCard(
                     Box(
                         modifier = Modifier.size(6.dp).clip(CircleShape).background(
                                 when (tournament.status) {
-                                    TournamentStatus.ENROLLING -> primaryGold
+                                    TournamentStatus.ENROLLING -> MaterialTheme.colorScheme.primary
                                     TournamentStatus.ACTIVE -> Color(0xFF4CAF50)
                                     else -> Color.Gray
                                 }
@@ -185,11 +181,11 @@ fun TournamentCard(
                 }
 
                 Box(
-                    modifier = Modifier.clip(RoundedCornerShape(6.dp)).border(1.dp, primaryGold.copy(alpha = 0.2f), RoundedCornerShape(6.dp)).padding(horizontal = 8.dp, vertical = 4.dp)
+                    modifier = Modifier.clip(RoundedCornerShape(6.dp)).border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f), RoundedCornerShape(6.dp)).padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Text(
                         text = tournament.gamemode.replace("_", " "),
-                        color = primaryGold,
+                        color = MaterialTheme.colorScheme.primary,
                         fontSize = 9.sp,
                         fontWeight = FontWeight.Black,
                         letterSpacing = 1.sp

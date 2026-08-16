@@ -162,15 +162,20 @@ fun AppRoot(
         )
 
         Screen.results -> {
-            if (viewModel.latestSubmission == null) {
+            val res = viewModel.latestSubmission
+            if (res == null) {
                 LaunchedEffect(Unit) {
                     viewModel.loadLatestSubmission()
                 }
-            }
-
-            if (viewModel.latestSubmission != null) {
+                Box(
+                    modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = Color.White)
+                }
+            } else {
                 Results(
-                    submission = viewModel.latestSubmission!!,
+                    submission = res,
                     isPlaced = viewModel.currentUser.isPlaced,
                     onNavigateBack = {
                         viewModel.continueWithAd(activity, Screen.home) {
@@ -183,29 +188,6 @@ fun AppRoot(
                         }
                     }
                 )
-            } else {
-                Box(
-                    modifier = Modifier.fillMaxSize().background(Color(0xFF0F0F0F)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("No result available.", color = Color.White, fontWeight = FontWeight.Bold)
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Button(
-                            onClick = { viewModel.loadLatestSubmission() },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black)
-                        ) {
-                            Text("Retry", fontWeight = FontWeight.Black)
-                        }
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Button(
-                            onClick = { viewModel.navigateTo(Screen.home, page = 1) },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFD700), contentColor = Color.Black)
-                        ) {
-                            Text("Return Home", fontWeight = FontWeight.Black)
-                        }
-                    }
-                }
             }
         }
 
@@ -276,17 +258,24 @@ fun AppRoot(
         }
 
         Screen.userProfile -> {
-            if (viewModel.viewedUser != null) {
+            val viewed = viewModel.viewedUser
+            if (viewed != null) {
                 Profile(
-                    user = viewModel.viewedUser!!,
-                    isOwner = viewModel.viewedUser!!.id == viewModel.currentUser.id,
+                    user = viewed,
+                    isOwner = viewed.id == viewModel.currentUser.id,
                     pantheonPosition = viewModel.viewedPantheonPosition,
+                    lastTippedTimestamp = viewModel.globalTipCooldowns[viewed.id],
                     onNavigateBack = { viewModel.navigateTo(Screen.home, page = 2) },
                     onNavigateToSubmissions = { viewModel.navigateTo(Screen.submissions) },
                     onNavigateToSavedSubmissions = { viewModel.navigateTo(Screen.savedSubmissions) },
                     onNavigateToSettings = { viewModel.navigateTo(Screen.settings) },
                     onPurchaseReputation = { onSuccess ->
                         viewModel.applyMeritAction(SystemConfig.ACTION_PURCHASE_REPUTATION, onSuccess) { error ->
+                            Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    onTip = { amount ->
+                        viewModel.sendGlobalTip(viewed.id, amount) { error ->
                             Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
                         }
                     }
@@ -304,6 +293,7 @@ fun AppRoot(
                     leaderboard = viewModel.tournamentLeaderboard,
                     isLoading = viewModel.isTournamentLoading,
                     currentUserId = viewModel.currentUser.id,
+                    tippedUsers = viewModel.tippedInCurrentTournament,
                     onNavigateBack = { viewModel.continueWithAd(activity, Screen.tournamentDetails) },
                     onTipUser = { recipientId, amount ->
                         viewModel.sendTip(tournament.id, recipientId, amount) { error ->

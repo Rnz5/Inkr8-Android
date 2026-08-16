@@ -1,5 +1,6 @@
 package com.inkr8.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -19,6 +20,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -41,7 +43,10 @@ fun PaywallScreen(
     }
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(20.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(20.dp),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
 
@@ -56,7 +61,8 @@ fun PaywallScreen(
             Text(
                 text = "Become a Philosopher",
                 style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = Color.White
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -64,7 +70,8 @@ fun PaywallScreen(
 
             Text(
                 text = "You are playing the game.\nPhilosophers define it.",
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.Gray
             )
 
 
@@ -79,14 +86,15 @@ fun PaywallScreen(
 
             Card(
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
             ) {
                 Column(
                     modifier = Modifier.fillMaxWidth().padding(20.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("Philosopher", fontWeight = FontWeight.Bold)
-                    Text("Status elevated")
+                    Text("Philosopher", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                    Text("Status elevated", color = Color.White)
                 }
             }
         }
@@ -108,7 +116,8 @@ fun PaywallScreen(
                 text = "Stay in the system. Or rise above it.",
                 style = MaterialTheme.typography.bodySmall,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                color = Color.DarkGray
             )
         }
     }
@@ -120,8 +129,8 @@ fun BenefitItem(text: String) {
         modifier = Modifier.padding(vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text("✔", modifier = Modifier.padding(end = 8.dp))
-        Text(text)
+        Text("✔", modifier = Modifier.padding(end = 8.dp), color = MaterialTheme.colorScheme.primary)
+        Text(text, color = Color.LightGray)
     }
 }
 

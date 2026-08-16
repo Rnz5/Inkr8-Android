@@ -45,12 +45,14 @@ fun Practice(
         theme?.let { topic = topicRepository.getRandomTopicFromTheme(it.id) }
     }
 
-    val primaryGold = Color(0xFFFFD700)
-    val backgroundDark = Color(0xFF0F0F0F)
-    val surfaceDark = Color(0xFF1A1A1A)
-
     Column(
-        modifier = Modifier.fillMaxSize().background(backgroundDark).statusBarsPadding().navigationBarsPadding().padding(16.dp).verticalScroll(rememberScrollState()),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         UserHeaderCard(
@@ -62,7 +64,7 @@ fun Practice(
         Column {
             Text(
                 text = "Training Modules",
-                color = primaryGold,
+                color = MaterialTheme.colorScheme.primary,
                 style = MaterialTheme.typography.labelSmall,
                 letterSpacing = 2.sp,
                 fontWeight = FontWeight.Black
@@ -87,8 +89,7 @@ fun Practice(
             description = "Unconstrained composition using 4 random words entries.",
             constraints = "Max 150 words • 4 words",
             onClick = { onNavigateToWriting(StandardWriting) },
-            enabled = true,
-            primaryGold = primaryGold
+            enabled = true
         )
 
         PracticeModuleCard(
@@ -103,8 +104,7 @@ fun Practice(
                     }
                 }
             },
-            enabled = theme != null && topic != null,
-            primaryGold = primaryGold
+            enabled = theme != null && topic != null
         )
 
         Spacer(modifier = Modifier.weight(1f))
@@ -140,13 +140,12 @@ fun PracticeModuleCard(
     description: String,
     constraints: String,
     onClick: () -> Unit,
-    enabled: Boolean,
-    primaryGold: Color
+    enabled: Boolean
 ) {
     Card(
         modifier = Modifier.fillMaxWidth().clickable(enabled = enabled) { onClick() },
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = BorderStroke(1.dp, if (enabled) Color.White.copy(alpha = 0.05f) else Color.White.copy(alpha = 0.02f))
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
@@ -164,7 +163,7 @@ fun PracticeModuleCard(
                 )
                 Text(
                     text = moduleNumber,
-                    color = primaryGold.copy(alpha = 0.3f),
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
                     fontWeight = FontWeight.Black,
                     fontSize = 24.sp
                 )
@@ -188,7 +187,7 @@ fun PracticeModuleCard(
             ) {
                 Text(
                     text = constraints,
-                    color = if (enabled) primaryGold.copy(alpha = 0.7f) else Color.DarkGray,
+                    color = if (enabled) MaterialTheme.colorScheme.primary.copy(alpha = 0.7f) else Color.DarkGray,
                     fontSize = 9.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.sp

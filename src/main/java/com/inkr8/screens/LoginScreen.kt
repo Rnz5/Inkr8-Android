@@ -23,11 +23,8 @@ import com.inkr8.ui.theme.Inkr8Theme
 fun LoginScreen(
     onGoogleLogin: () -> Unit
 ) {
-    val primaryGold = Color(0xFFFFD700)
-    val backgroundDark = Color(0xFF0F0F0F)
-
     Box(
-        modifier = Modifier.fillMaxSize().background(backgroundDark)
+        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
     ) {
         Column(
             modifier = Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(24.dp),
@@ -49,11 +46,11 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 Box(
-                    modifier = Modifier.clip(RoundedCornerShape(4.dp)).background(primaryGold.copy(alpha = 0.1f)).border(1.dp, primaryGold.copy(alpha = 0.2f), RoundedCornerShape(4.dp)).padding(horizontal = 12.dp, vertical = 4.dp)
+                    modifier = Modifier.clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)).border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f), RoundedCornerShape(4.dp)).padding(horizontal = 12.dp, vertical = 4.dp)
                 ) {
                     Text(
                         text = "Write and Learn",
-                        color = primaryGold,
+                        color = MaterialTheme.colorScheme.primary,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Black,
                         letterSpacing = 2.sp

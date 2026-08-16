@@ -63,6 +63,10 @@ class AppViewModel(
     var isTournamentLoading by mutableStateOf(false)
     var isEnrolledInSelectedTournament by mutableStateOf(false)
     var isSubmittedToSelectedTournament by mutableStateOf(false)
+    
+    // Tip tracking
+    val tippedInCurrentTournament = mutableStateMapOf<String, Boolean>()
+    val globalTipCooldowns = mutableStateMapOf<String, Long?>()
 
     // Listeners
     private var submissionsListener: ListenerRegistration? = null
@@ -140,11 +144,16 @@ class AppViewModel(
             evaluation = null
         )
 
-        val isTournament = finalSubmission.playmode == "TOURNAMENT" && activeTournamentId != null
+        val isTournament = finalSubmission.playmode == "TOURNAMENT"
 
         if (isTournament) {
+            val tId = activeTournamentId
+            if (tId == null) {
+                onError("Tournament ID is missing. Please restart the entry.")
+                return
+            }
             tournamentRepository.submitToTournament(
-                tournamentId = activeTournamentId!!,
+                tournamentId = tId,
                 userId = currentUser.id,
                 submission = finalSubmission,
                 onSuccess = {
@@ -220,7 +229,7 @@ class AppViewModel(
     }
 
     fun createTournament(title: String, gamemode: String, prizePool: Long, maxPlayers: Int, onError: (String) -> Unit) {
-        tournamentRepository.createUserTournament(
+        tournamentRepository.createTournament(
             title, gamemode, prizePool, maxPlayers,
             onSuccess = { navigateTo(Screen.home, page = 2) },
             onError = { e -> onError(e.message ?: "Failed to create tournament") }
@@ -238,19 +247,26 @@ class AppViewModel(
         selectedProfileUserId = userId
         userRepository.getUserById(userId) { user ->
             viewedUser = user
-            if (user != null && user.rating >= PantheonManager.MIN_RATING) {
-                userRepository.getTop100Users { top100 ->
-                    val (isPantheon, position) = PantheonManager.checkPantheonStatus(user, top100)
-                    viewedPantheonPosition = if (isPantheon) position else null
+            if (user != null) {
+                if (user.rating >= PantheonManager.MIN_RATING) {
+                    userRepository.getTop100Users { top100 ->
+                        val (isPantheon, position) = PantheonManager.checkPantheonStatus(user, top100)
+                        viewedPantheonPosition = if (isPantheon) position else null
+                    }
+                } else {
+                    viewedPantheonPosition = null
                 }
-            } else {
-                viewedPantheonPosition = null
+                
+                // Check tip cooldown for Pantheon members
+                userRepository.checkGlobalTipCooldown(currentUser.id, user.id) { timestamp ->
+                    globalTipCooldowns[user.id] = timestamp
+                }
             }
         }
     }
 
     fun enrollInTournament(tournamentId: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
-        tournamentRepository.enrollUserViaFunction(
+        tournamentRepository.enrollInTournament(
             tournamentId = tournamentId,
             onSuccess = {
                 onSuccess()
@@ -343,6 +359,13 @@ class AppViewModel(
                         )
                     }
                     isTournamentLoading = false
+                    
+                    // Pre-check tips status for the current user in this tournament
+                    results.forEach { submission ->
+                        tournamentRepository.hasUserTippedInTournament(tournamentId, currentUser.id, submission.authorId) { hasTipped ->
+                            tippedInCurrentTournament[submission.authorId] = hasTipped
+                        }
+                    }
                 }
             },
             onError = { e ->
@@ -385,6 +408,7 @@ class AppViewModel(
         submissionStatusListener?.remove()
         isEnrolledInSelectedTournament = false
         isSubmittedToSelectedTournament = false
+        tippedInCurrentTournament.clear()
     }
 
     fun applyMeritAction(action: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
@@ -403,7 +427,21 @@ class AppViewModel(
             tipperId = currentUser.id,
             recipientId = recipientId,
             amount = amount,
-            onSuccess = {},
+            onSuccess = {
+                tippedInCurrentTournament[recipientId] = true
+            },
+            onError = { e -> onError(e.message ?: "Tip failed") }
+        )
+    }
+    
+    fun sendGlobalTip(recipientId: String, amount: Long, onError: (String) -> Unit) {
+        userRepository.sendGlobalTip(
+            tipperId = currentUser.id,
+            recipientId = recipientId,
+            amount = amount,
+            onSuccess = {
+                globalTipCooldowns[recipientId] = System.currentTimeMillis()
+            },
             onError = { e -> onError(e.message ?: "Tip failed") }
         )
     }

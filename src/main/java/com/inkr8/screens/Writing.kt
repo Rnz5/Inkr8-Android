@@ -95,10 +95,6 @@ fun Writing(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    val primaryGold = Color(0xFFFFD700)
-    val backgroundDark = Color(0xFF0F0F0F)
-    val surfaceDark = Color(0xFF1A1A1A)
-
     LaunchedEffect(gamemode, playMode, tournamentContext) {
         selectedWords = when {
             playMode is PlayMode.Tournament && tournamentContext != null -> {
@@ -152,7 +148,7 @@ fun Writing(
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        containerColor = backgroundDark
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Column(
             modifier = Modifier.fillMaxSize().padding(padding).statusBarsPadding().navigationBarsPadding().padding(16.dp),
@@ -182,7 +178,7 @@ fun Writing(
                     }
                     Text(
                         text = modeTitle,
-                        color = primaryGold,
+                        color = MaterialTheme.colorScheme.primary,
                         style = MaterialTheme.typography.labelSmall,
                         letterSpacing = 2.sp,
                         fontWeight = FontWeight.Black
@@ -207,12 +203,12 @@ fun Writing(
                 )
             } else {
                 Box(
-                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(surfaceDark).border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(12.dp)).padding(16.dp)
+                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.surface).border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(12.dp)).padding(16.dp)
                 ) {
                     Column {
                         Text(
                             text = "Standard Writing",
-                            color = primaryGold,
+                            color = MaterialTheme.colorScheme.primary,
                             style = MaterialTheme.typography.labelSmall,
                             letterSpacing = 1.5.sp,
                             fontWeight = FontWeight.Black
@@ -277,7 +273,7 @@ fun Writing(
                         focusedContainerColor = Color.Transparent,
                         unfocusedContainerColor = Color.Transparent,
                         disabledContainerColor = Color.Transparent,
-                        cursorColor = primaryGold,
+                        cursorColor = MaterialTheme.colorScheme.primary,
                         focusedIndicatorColor = Color.Transparent,
                         unfocusedIndicatorColor = Color.Transparent,
                         disabledIndicatorColor = Color.Transparent,
@@ -300,7 +296,7 @@ fun Writing(
                     val isError = (wordCount < min || wordCount > max) && userText.isNotEmpty()
                     Text(
                         text = "Words: $wordCount",
-                        color = if (isError) Color(0xFFF44336) else Color.Gray,
+                        color = if (isError) MaterialTheme.colorScheme.error else Color.Gray,
                         fontWeight = FontWeight.Bold,
                         fontSize = 12.sp
                     )
@@ -379,12 +375,12 @@ fun DirectiveCard(
     onTopicClick: () -> Unit
 ) {
     Column(
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Color(0xFF1A1A1A)).border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(16.dp))
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surface).border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(16.dp))
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
                 text = "Directive",
-                color = Color(0xFFFFD700),
+                color = MaterialTheme.colorScheme.primary,
                 style = MaterialTheme.typography.labelSmall,
                 letterSpacing = 2.sp,
                 fontWeight = FontWeight.Black
@@ -438,16 +434,16 @@ fun LexiconChip(
     onClick: () -> Unit
 ) {
     Box(
-        modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(if (isUsed) Color(0xFFFFD700).copy(alpha = 0.1f) else Color.White.copy(alpha = 0.05f))
+        modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(if (isUsed) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f) else Color.White.copy(alpha = 0.05f))
             .border(
                 1.dp, 
-                if (isUsed) Color(0xFFFFD700).copy(alpha = 0.5f) else Color.White.copy(alpha = 0.1f), 
+                if (isUsed) MaterialTheme.colorScheme.primary.copy(alpha = 0.5f) else Color.White.copy(alpha = 0.1f), 
                 RoundedCornerShape(8.dp)
             ).clickable { onClick() }.padding(horizontal = 12.dp, vertical = 10.dp)
     ) {
         Text(
             text = word.word,
-            color = if (isUsed) Color(0xFFFFD700) else Color.LightGray,
+            color = if (isUsed) MaterialTheme.colorScheme.primary else Color.LightGray,
             fontWeight = if (isUsed) FontWeight.Black else FontWeight.Medium,
             fontSize = 13.sp,
             letterSpacing = 0.5.sp
@@ -459,14 +455,14 @@ fun LexiconChip(
 fun WordInfoDialog(word: Words, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = Color(0xFF1A1A1A),
+        containerColor = MaterialTheme.colorScheme.surface,
         title = {
             Column {
                 Text(
                     text = word.word,
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Black,
-                    color = Color(0xFFFFD700)
+                    color = MaterialTheme.colorScheme.primary
                 )
                 Text(text = word.type.lowercase(), style = MaterialTheme.typography.bodySmall, color = Color.Gray)
             }
@@ -495,13 +491,13 @@ fun WordInfoDialog(word: Words, onDismiss: () -> Unit) {
 fun ThemeInfoDialog(theme: Theme, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = Color(0xFF1A1A1A),
+        containerColor = MaterialTheme.colorScheme.surface,
         title = {
             Text(
                 text = theme.name,
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Black,
-                color = Color(0xFFFFD700)
+                color = MaterialTheme.colorScheme.primary
             )
         },
         text = {
@@ -528,7 +524,7 @@ fun ThemeInfoDialog(theme: Theme, onDismiss: () -> Unit) {
 fun TopicInfoDialog(topic: Topic, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = Color(0xFF1A1A1A),
+        containerColor = MaterialTheme.colorScheme.surface,
         title = {
             Text(
                 text = topic.name,

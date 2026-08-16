@@ -63,17 +63,7 @@ fun LeaderboardContent(
     onNavigateBack: () -> Unit,
     onUserClick: (Users) -> Unit
 ) {
-    val primaryGold = Color(0xFFFFD700)
-    val backgroundDark = Color(0xFF0F0F0F)
-    val surfaceDark = Color(0xFF1A1A1A)
-
-    val pantheonMembers = top100.filter {
-        it.rating >= PantheonManager.MIN_RATING && it.id != "R8"
-    }
-
-    val r8User = top100.find { it.id == "R8" } ?: Users(id = "R8", name = "R8", rating = 999)
-
-    Box(modifier = Modifier.fillMaxSize().background(backgroundDark)) {
+    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Column(
             modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp)
         ) {
@@ -110,11 +100,11 @@ fun LeaderboardContent(
                     SectionHeader("The Pantheon", "Elite Standings")
                 }
 
-                if (pantheonMembers.isEmpty()) {
+                if (pantheonMembers(top100).isEmpty()) {
                     item {
                         Card(
                             modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(containerColor = surfaceDark),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                             shape = RoundedCornerShape(16.dp)
                         ) {
                             Text(
@@ -128,14 +118,12 @@ fun LeaderboardContent(
                         }
                     }
                 } else {
-                    itemsIndexed(pantheonMembers) { index, user ->
+                    itemsIndexed(pantheonMembers(top100)) { index, user ->
                         val isCurrentUser = user.id == currentUser.id
                         PantheonMemberCard(
                             rank = index + 1,
                             user = user,
                             isCurrentUser = isCurrentUser,
-                            primaryGold = primaryGold,
-                            surfaceDark = surfaceDark,
                             onClick = { onUserClick(user) }
                         )
                     }
@@ -164,8 +152,7 @@ fun LeaderboardContent(
                             val count = leagueCounts[league] ?: 0
                             LeagueDistributionCard(
                                 league = league,
-                                count = count,
-                                surfaceDark = surfaceDark
+                                count = count
                             )
                         }
                     }
@@ -174,7 +161,7 @@ fun LeaderboardContent(
                 item { Spacer(modifier = Modifier.height(24.dp)) }
 
                 item {
-                    R8AuthorityCard(r8User, onUserClick)
+                    R8AuthorityCard(top100.find { it.id == "R8" } ?: Users(id = "R8", name = "R8", rating = 999), onUserClick)
                 }
                 
                 item {
@@ -192,12 +179,16 @@ fun LeaderboardContent(
     }
 }
 
+private fun pantheonMembers(top100: List<Users>) = top100.filter {
+    it.rating >= PantheonManager.MIN_RATING && it.id != "R8"
+}
+
 @Composable
 fun SectionHeader(title: String, subtitle: String) {
     Column(modifier = Modifier.padding(vertical = 8.dp)) {
         Text(
             text = subtitle,
-            color = Color(0xFFFFD700).copy(alpha = 0.6f),
+            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
             fontSize = 9.sp,
             fontWeight = FontWeight.Black,
             letterSpacing = 2.sp
@@ -216,12 +207,10 @@ fun PantheonMemberCard(
     rank: Int,
     user: Users,
     isCurrentUser: Boolean,
-    primaryGold: Color,
-    surfaceDark: Color,
     onClick: () -> Unit
 ) {
     val rankColor = when (rank) {
-        1 -> primaryGold
+        1 -> MaterialTheme.colorScheme.primary
         2 -> Color(0xFFC0C0C0)
         3 -> Color(0xFFCD7F32)
         else -> Color.White.copy(alpha = 0.7f)
@@ -230,11 +219,11 @@ fun PantheonMemberCard(
     Card(
         modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).clickable(onClick = onClick).border(
                 width = if (isCurrentUser) 1.dp else 0.dp,
-                color = if (isCurrentUser) primaryGold else Color.Transparent,
+                color = if (isCurrentUser) MaterialTheme.colorScheme.primary else Color.Transparent,
                 shape = RoundedCornerShape(16.dp)
             ),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = surfaceDark)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
@@ -258,7 +247,7 @@ fun PantheonMemberCard(
                 if (isCurrentUser) {
                     Text(
                         text = "YOU",
-                        color = primaryGold,
+                        color = MaterialTheme.colorScheme.primary,
                         fontSize = 9.sp,
                         fontWeight = FontWeight.Black,
                         letterSpacing = 1.sp
@@ -287,13 +276,12 @@ fun PantheonMemberCard(
 @Composable
 fun LeagueDistributionCard(
     league: League,
-    count: Int,
-    surfaceDark: Color
+    count: Int
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = surfaceDark.copy(alpha = 0.5f))
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f))
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
@@ -341,7 +329,7 @@ fun R8AuthorityCard(r8User: Users, onUserClick: (Users) -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).clickable { onUserClick(r8User) }.border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(20.dp)),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF0A0A0A))
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
             Box(
@@ -358,7 +346,7 @@ fun R8AuthorityCard(r8User: Users, onUserClick: (Users) -> Unit) {
             ) {
                 Text(
                     text = "System Authority",
-                    color = Color(0xFFFFD700).copy(alpha = 0.8f),
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
                     fontWeight = FontWeight.Black,
                     fontSize = 10.sp,
                     letterSpacing = 4.sp

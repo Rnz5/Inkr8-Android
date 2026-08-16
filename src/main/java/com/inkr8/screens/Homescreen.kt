@@ -44,10 +44,6 @@ fun HomeScreen(
     var showSentence by remember { mutableStateOf(false) }
     var isSpending by remember { mutableStateOf(false) }
 
-    val primaryGold = Color(0xFFFFD700)
-    val backgroundDark = Color(0xFF0F0F0F)
-    val surfaceDark = Color(0xFF1A1A1A)
-
     LaunchedEffect(Unit) {
         if (currentWord == null) {
             currentWord = wordRepository.getSingleRandomWord()
@@ -56,7 +52,13 @@ fun HomeScreen(
     }
 
     Column(
-        modifier = Modifier.fillMaxSize().background(backgroundDark).statusBarsPadding().navigationBarsPadding().padding(16.dp).verticalScroll(rememberScrollState()),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Row(
@@ -77,13 +79,13 @@ fun HomeScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = surfaceDark),
-                border = BorderStroke(1.dp, primaryGold.copy(alpha = 0.15f))
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.15f))
             ) {
                 Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 14.dp)) {
                     Text(
                         text = "Continuity",
-                        color = primaryGold,
+                        color = MaterialTheme.colorScheme.primary,
                         fontSize = 9.sp,
                         fontWeight = FontWeight.Black,
                         letterSpacing = 2.sp
@@ -111,7 +113,7 @@ fun HomeScreen(
                     LinearProgressIndicator(
                         progress = { (user.currentStreak.coerceAtMost(7)).toFloat() / 7f },
                         modifier = Modifier.fillMaxWidth().height(3.dp).clip(RoundedCornerShape(2.dp)),
-                        color = primaryGold,
+                        color = MaterialTheme.colorScheme.primary,
                         trackColor = Color.White.copy(alpha = 0.05f)
                     )
                     Spacer(modifier = Modifier.height(4.dp))
@@ -129,7 +131,7 @@ fun HomeScreen(
         Card(
             modifier = Modifier.fillMaxWidth().height(120.dp),
             shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = surfaceDark),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             border = BorderStroke(1.dp, Color.White.copy(alpha = 0.05f))
         ) {
             Column(
@@ -139,7 +141,7 @@ fun HomeScreen(
             ) {
                 Text(
                     text = "R8 Core",
-                    color = primaryGold,
+                    color = MaterialTheme.colorScheme.primary,
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Black,
                     letterSpacing = 3.sp
@@ -173,7 +175,7 @@ fun HomeScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = surfaceDark),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 border = BorderStroke(1.dp, Color.White.copy(alpha = 0.05f))
             ) {
                 Column(
@@ -200,11 +202,11 @@ fun HomeScreen(
 
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(
-                            modifier = Modifier.clip(RoundedCornerShape(4.dp)).background(primaryGold.copy(alpha = 0.1f)).padding(horizontal = 6.dp, vertical = 2.dp)
+                            modifier = Modifier.clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)).padding(horizontal = 6.dp, vertical = 2.dp)
                         ) {
                             Text(
                                 text = currentWord?.type?.uppercase() ?: "",
-                                color = primaryGold,
+                                color = MaterialTheme.colorScheme.primary,
                                 fontSize = 9.sp,
                                 fontWeight = FontWeight.Bold
                             )
@@ -267,9 +269,9 @@ fun HomeScreen(
                         modifier = Modifier.fillMaxWidth().height(48.dp),
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = if (showSentence) surfaceDark else Color.White,
+                            containerColor = if (showSentence) MaterialTheme.colorScheme.surface else Color.White,
                             contentColor = if (showSentence) Color.Gray else Color.Black,
-                            disabledContainerColor = surfaceDark
+                            disabledContainerColor = MaterialTheme.colorScheme.surface
                         )
                     ) {
                         Text(
@@ -297,7 +299,7 @@ fun HomeScreen(
                 onClick = onNavigateToPractice,
                 modifier = Modifier.weight(1f).height(56.dp),
                 shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = surfaceDark, contentColor = Color.White),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surface, contentColor = Color.White),
                 border = BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -310,7 +312,7 @@ fun HomeScreen(
                 onClick = onNavigateToCompetitions,
                 modifier = Modifier.weight(1f).height(56.dp),
                 shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = primaryGold, contentColor = Color.Black)
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = Color.Black)
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("Competitions", fontWeight = FontWeight.Black, fontSize = 14.sp)

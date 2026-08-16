@@ -1,54 +1,57 @@
 package com.inkr8.ui.theme
 
-import android.app.Activity
-import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.Color
 
+/**
+ * Inkr8 Dark Color Scheme
+ * primary -> Branding Gold
+ * secondary -> Standard Surface
+ * tertiary -> Lighter Surface / Highlights
+ * background -> Deep Black Background
+ * surface -> Standard Surface
+ */
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+    primary = Inkr8Gold,
+    onPrimary = Color.Black,
+    secondary = Inkr8Surface,
+    onSecondary = Color.White,
+    tertiary = Inkr8SurfaceLight,
+    onTertiary = Color.White,
+    background = Inkr8Background,
+    onBackground = Color.White,
+    surface = Inkr8Surface,
+    onSurface = Color.White,
+    surfaceVariant = Inkr8SurfaceDark,
+    onSurfaceVariant = Color.Gray,
+    error = Inkr8Error,
+    onError = Color.White
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    primary = Inkr8Gold,
+    onPrimary = Color.Black,
+    secondary = Color.White,
+    onSecondary = Color.Black,
+    tertiary = Color(0xFFF5F5F5),
+    onTertiary = Color.Black,
+    background = Color.White,
+    onBackground = Color.Black,
+    surface = Color.White,
+    onSurface = Color.Black,
+    error = Color(0xFFB00020),
+    onError = Color.White
 )
 
 @Composable
 fun Inkr8Theme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = false,
+    darkTheme: Boolean = true, // Force dark theme for Inkr8's aesthetic by default
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
-    }
+    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
 
     MaterialTheme(
         colorScheme = colorScheme,

@@ -20,12 +20,14 @@ fun LoadingScreen(
     onReturnHome: () -> Unit = {}
 ) {
     Box(
-        modifier = Modifier.fillMaxSize().background(Color(0xFF0F0F0F)),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
         if (!isTimeout) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                CircularProgressIndicator(color = Color(0xFFFFD700))
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
                     "R8 is judging your fate...",
@@ -37,7 +39,7 @@ fun LoadingScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = "${elapsedSeconds}s",
-                        color = Color(0xFFFFD700),
+                        color = MaterialTheme.colorScheme.primary,
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold
                     )
@@ -50,7 +52,7 @@ fun LoadingScreen(
             ) {
                 Text(
                     "JUDGMENT DELAYED",
-                    color = Color(0xFFFFD700),
+                    color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Black,
                     letterSpacing = 2.sp
@@ -81,12 +83,12 @@ fun InitialLoadingScreen() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0F0F0F)),
+            .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             CircularProgressIndicator(
-                color = Color(0xFFFFD700),
+                color = MaterialTheme.colorScheme.primary,
                 strokeWidth = 2.dp,
                 modifier = Modifier.size(40.dp)
             )

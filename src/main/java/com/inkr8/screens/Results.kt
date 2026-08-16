@@ -59,7 +59,7 @@ fun Results(
     onNavigateToPractice: () -> Unit,
 ) {
     val evaluation = submission.evaluation
-        ?: return Box(modifier = Modifier.fillMaxSize().background(Color(0xFF0F0F0F)), contentAlignment = Alignment.Center) {
+        ?: return Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background), contentAlignment = Alignment.Center) {
             Text("R8 Judging...", color = Color.Gray, letterSpacing = 2.sp, fontWeight = FontWeight.Bold)
         }
 
@@ -88,12 +88,9 @@ fun Results(
     }
 
     val feedbackToShow = evaluation.feedback
-    val primaryGold = Color(0xFFFFD700)
-    val backgroundDark = Color(0xFF0F0F0F)
-    val surfaceDark = Color(0xFF1A1A1A)
 
     Column(
-        modifier = Modifier.fillMaxSize().background(backgroundDark).statusBarsPadding().navigationBarsPadding().verticalScroll(rememberScrollState()).padding(bottom = 32.dp),
+        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).statusBarsPadding().navigationBarsPadding().verticalScroll(rememberScrollState()).padding(bottom = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Row(
@@ -148,7 +145,7 @@ fun Results(
             
             Text(
                 text = appraisal,
-                color = primaryGold,
+                color = MaterialTheme.colorScheme.primary,
                 style = MaterialTheme.typography.labelMedium,
                 letterSpacing = 1.sp,
                 fontWeight = FontWeight.Bold
@@ -160,7 +157,7 @@ fun Results(
         Card(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
             shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = surfaceDark),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             border = BorderStroke(1.dp, Color.White.copy(alpha = 0.05f))
         ) {
             Column(modifier = Modifier.padding(24.dp)) {
@@ -214,14 +211,14 @@ fun Results(
         Card(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
             shape = RoundedCornerShape(14.dp),
-            colors = CardDefaults.cardColors(containerColor = surfaceDark)
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
                 if (submission.playmode == "RANKED" && submission.matchResult != null) {
                     val matchResult = submission.matchResult
                     val outcomeColor = when (matchResult.outcome) {
                         "WIN" -> Color(0xFF4CAF50)
-                        "LOSS" -> Color(0xFFF44336)
+                        "LOSS" -> MaterialTheme.colorScheme.error
                         else -> Color.Gray
                     }
                     val outcomeLabel = when (matchResult.outcome) {
@@ -258,7 +255,7 @@ fun Results(
                         Text("Merit Gain", color = Color.Gray, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                         Text(
                             text = "+${submission.evaluation?.meritEarned ?: 0}",
-                            color = primaryGold,
+                            color = MaterialTheme.colorScheme.primary,
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Black
                         )
@@ -284,7 +281,7 @@ fun Results(
                                     val sign = if (ratingChange >= 0) "+" else ""
                                     Text(
                                         text = "$sign$ratingChange",
-                                        color = if (ratingChange >= 0) Color(0xFF4CAF50) else Color(0xFFF44336),
+                                        color = if (ratingChange >= 0) Color(0xFF4CAF50) else MaterialTheme.colorScheme.error,
                                         fontSize = 24.sp,
                                         fontWeight = FontWeight.Black
                                     )

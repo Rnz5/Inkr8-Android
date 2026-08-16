@@ -63,10 +63,6 @@ fun Competitions(
     var recentRankedSubmissions by remember { mutableStateOf<List<Submissions>>(emptyList()) }
     var isEnteringRanked by remember { mutableStateOf(false) }
 
-    val primaryGold = Color(0xFFFFD700)
-    val backgroundDark = Color(0xFF0F0F0F)
-    val surfaceDark = Color(0xFF1A1A1A)
-
     DisposableEffect(Unit) {
         val registration = tournamentRepository.listenToTournamentFeed(
             onUpdate = { tournaments = it },
@@ -114,7 +110,12 @@ fun Competitions(
     )
 
     Column(
-        modifier = Modifier.fillMaxSize().background(backgroundDark).statusBarsPadding().navigationBarsPadding().padding(16.dp)
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .padding(16.dp)
     ) {
         LazyColumn(
             modifier = Modifier.weight(1f),
@@ -132,7 +133,7 @@ fun Competitions(
                 Column {
                     Text(
                         text = "Competitive Module",
-                        color = primaryGold,
+                        color = MaterialTheme.colorScheme.primary,
                         style = MaterialTheme.typography.labelSmall,
                         letterSpacing = 2.sp,
                         fontWeight = FontWeight.Black
@@ -141,7 +142,7 @@ fun Competitions(
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(20.dp),
-                        colors = CardDefaults.cardColors(containerColor = surfaceDark),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondary),
                         border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.05f))
                     ) {
                         Column(modifier = Modifier.padding(20.dp)) {
@@ -170,7 +171,7 @@ fun Competitions(
                                     onClick = onNavigateToLeaderboard,
                                     modifier = Modifier.background(Color.White.copy(alpha = 0.05f), CircleShape).size(32.dp)
                                 ) {
-                                    Text("L", color = primaryGold, fontWeight = FontWeight.Black, fontSize = 12.sp)
+                                    Text("L", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Black, fontSize = 12.sp)
                                 }
                             }
 
@@ -185,7 +186,7 @@ fun Competitions(
                                     if (user.isPlaced) {
                                         Text(
                                             text = league.displayName.uppercase(),
-                                            color = primaryGold,
+                                            color = MaterialTheme.colorScheme.primary,
                                             fontWeight = FontWeight.ExtraBold,
                                             fontSize = 12.sp,
                                             letterSpacing = 1.sp
@@ -206,7 +207,7 @@ fun Competitions(
                                         )
                                         Text(
                                             text = "Phase: ${user.placementMatchesPlayed}/6",
-                                            color = primaryGold,
+                                            color = MaterialTheme.colorScheme.primary,
                                             fontSize = 10.sp,
                                             fontWeight = FontWeight.Bold
                                         )
@@ -253,7 +254,7 @@ fun Competitions(
                                 LinearProgressIndicator(
                                     progress = { user.placementMatchesPlayed.toFloat() / 6f },
                                     modifier = Modifier.fillMaxWidth().height(2.dp).clip(CircleShape),
-                                    color = primaryGold.copy(alpha = 0.5f),
+                                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
                                     trackColor = Color.White.copy(alpha = 0.05f)
                                 )
                             }
@@ -273,12 +274,12 @@ fun Competitions(
                                 recentRankedSubmissions.take(5).forEach { submission ->
                                     val statusColor = when (submission.matchStatus) {
                                         "MATCHED" -> when (submission.matchResult?.outcome) {
-                                            "WIN" -> Color(0xFF4CAF50)
-                                            "LOSS" -> Color(0xFFF44336)
+                                            "WIN" -> MaterialTheme.colorScheme.primary
+                                            "LOSS" -> MaterialTheme.colorScheme.error
                                             else -> Color.Gray
                                         }
                                         "GHOST" -> Color(0xFF9E9E9E)
-                                        "PENDING" -> Color(0xFFFFD700)
+                                        "PENDING" -> MaterialTheme.colorScheme.primary
                                         else -> Color.DarkGray
                                     }
                                     val statusLabel = when (submission.matchStatus) {
@@ -338,8 +339,8 @@ fun Competitions(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = surfaceDark),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, primaryGold.copy(alpha = 0.1f))
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondary),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
                 ) {
                     Row(
                         modifier = Modifier.padding(20.dp),
@@ -366,7 +367,7 @@ fun Competitions(
                             shape = CircleShape,
                             contentPadding = PaddingValues(0.dp),
                             modifier = Modifier.size(44.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = primaryGold, contentColor = Color.Black)
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = Color.Black)
                         ) {
                             Text("+", fontWeight = FontWeight.Black, fontSize = 20.sp)
                         }

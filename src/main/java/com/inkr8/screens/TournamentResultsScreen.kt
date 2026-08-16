@@ -44,18 +44,15 @@ fun TournamentResultsScreen(
     leaderboard: List<TournamentLeaderboardEntry>,
     isLoading: Boolean,
     currentUserId: String,
+    tippedUsers: Map<String, Boolean> = emptyMap(),
     onNavigateBack: () -> Unit,
     onTipUser: (recipientId: String, amount: Long) -> Unit,
     onOpenUserProfile: (String) -> Unit
 ){
-    val primaryGold = Color(0xFFFFD700)
-    val backgroundDark = Color(0xFF0F0F0F)
-    val surfaceDark = Color(0xFF1A1A1A)
-
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(backgroundDark)
+            .background(MaterialTheme.colorScheme.background)
             .statusBarsPadding()
             .navigationBarsPadding()
             .padding(horizontal = 20.dp, vertical = 12.dp)
@@ -100,7 +97,7 @@ fun TournamentResultsScreen(
         Card(
             modifier = Modifier.fillMaxSize().padding(bottom = 16.dp),
             shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = surfaceDark),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             border = BorderStroke(1.dp, Color.White.copy(alpha = 0.05f))
         ) {
             if (isLoading) {
@@ -108,7 +105,7 @@ fun TournamentResultsScreen(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(color = primaryGold)
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                 }
             } else if (leaderboard.isEmpty()) {
                 Box(
@@ -138,9 +135,9 @@ fun TournamentResultsScreen(
                                 placement = index + 1,
                                 entry = entry,
                                 currentUserId = currentUserId,
+                                hasTipped = tippedUsers[entry.submission.authorId] ?: false,
                                 onTipUser = onTipUser,
-                                onOpenUserProfile = onOpenUserProfile,
-                                primaryGold = primaryGold
+                                onOpenUserProfile = onOpenUserProfile
                             )
                         }
                     }
@@ -204,9 +201,9 @@ private fun TournamentResultRow(
     placement: Int,
     entry: TournamentLeaderboardEntry,
     currentUserId: String,
+    hasTipped: Boolean,
     onTipUser: (recipientId: String, amount: Long) -> Unit,
-    onOpenUserProfile: (String) -> Unit,
-    primaryGold: Color
+    onOpenUserProfile: (String) -> Unit
 ) {
     val finalScore = entry.submission.evaluation?.finalScore ?: 0.0
     val meritEarned = entry.submission.evaluation?.meritEarned ?: 0L
@@ -217,7 +214,7 @@ private fun TournamentResultRow(
     var showTipDialog by remember { mutableStateOf(false) }
 
     val placeColor = when (placement) {
-        1 -> primaryGold
+        1 -> MaterialTheme.colorScheme.primary
         2 -> Color.LightGray
         3 -> Color(0xFFCD7F32)
         else -> Color.Gray
@@ -228,13 +225,13 @@ private fun TournamentResultRow(
             tournament = tournament,
             entry = entry,
             isSelf = isSelf,
+            hasTipped = hasTipped,
             onDismiss = { showSubmissionSheet = false },
             onOpenProfile = {
                 showSubmissionSheet = false
                 onOpenUserProfile(entry.submission.authorId)
             },
-            onTip = { amount -> onTipUser(entry.submission.authorId, amount) },
-            primaryGold = primaryGold
+            onTip = { amount -> onTipUser(entry.submission.authorId, amount) }
         )
     }
 
@@ -302,7 +299,7 @@ private fun TournamentResultRow(
         Text(
             text = FormatUtils.formatMerit(meritEarned),
             modifier = Modifier.width(55.dp),
-            color = primaryGold,
+            color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.Black,
             fontSize = 13.sp
         )
@@ -312,13 +309,14 @@ private fun TournamentResultRow(
                 modifier = Modifier
                     .padding(start = 8.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(8.dp))
-                    .clickable { showTipDialog = true }
+                    .background(if (hasTipped) Color.White.copy(alpha = 0.05f) else Color.Transparent)
+                    .border(1.dp, if (hasTipped) Color.DarkGray else Color.White.copy(alpha = 0.1f), RoundedCornerShape(8.dp))
+                    .clickable(enabled = !hasTipped) { showTipDialog = true }
                     .padding(horizontal = 10.dp, vertical = 6.dp)
             ) {
                 Text(
-                    text = "TIP",
-                    color = Color.White,
+                    text = if (hasTipped) "TIPPED" else "TIP",
+                    color = if (hasTipped) Color.Gray else Color.White,
                     fontWeight = FontWeight.Black,
                     fontSize = 10.sp,
                     letterSpacing = 1.sp
@@ -336,10 +334,10 @@ private fun TournamentSubmissionBottomSheet(
     tournament: Tournament,
     entry: TournamentLeaderboardEntry,
     isSelf: Boolean,
+    hasTipped: Boolean,
     onDismiss: () -> Unit,
     onOpenProfile: () -> Unit,
-    onTip: (Long) -> Unit,
-    primaryGold: Color
+    onTip: (Long) -> Unit
 ) {
     val submission = entry.submission
     val evaluation = submission.evaluation
@@ -347,7 +345,7 @@ private fun TournamentSubmissionBottomSheet(
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        containerColor = Color(0xFF1A1A1A),
+        containerColor = MaterialTheme.colorScheme.secondary,
         scrimColor = Color.Black.copy(alpha = 0.7f)
     ) {
         Column(
@@ -377,7 +375,7 @@ private fun TournamentSubmissionBottomSheet(
                     )
                     Text(
                         text = "View Competitor Dossier",
-                        color = primaryGold,
+                        color = MaterialTheme.colorScheme.primary,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -419,14 +417,12 @@ private fun TournamentSubmissionBottomSheet(
                 InfoMiniBlock(
                     label = "ACCURACY",
                     value = FormatUtils.formatPercentage(evaluation?.finalScore ?: 0.0),
-                    modifier = Modifier.weight(1f),
-                    primaryGold = primaryGold
+                    modifier = Modifier.weight(1f)
                 )
                 InfoMiniBlock(
                     label = "MERIT EARNED",
                     value = FormatUtils.formatMerit(evaluation?.meritEarned ?: 0L),
-                    modifier = Modifier.weight(1f),
-                    primaryGold = primaryGold
+                    modifier = Modifier.weight(1f)
                 )
             }
 
@@ -434,7 +430,7 @@ private fun TournamentSubmissionBottomSheet(
 
             if (!isSelf) {
                 Text(
-                    text = "REWARD COMPETITOR",
+                    text = if (hasTipped) "ALREADY TIPPED" else "REWARD COMPETITOR",
                     color = Color.Gray,
                     fontSize = 9.sp,
                     fontWeight = FontWeight.Black,
@@ -447,11 +443,18 @@ private fun TournamentSubmissionBottomSheet(
                 ) {
                     listOf(100L, 250L, 500L).forEach { amount ->
                         OutlinedButton(
-                            onClick = { onTip(amount) },
+                            onClick = { 
+                                onTip(amount)
+                                onDismiss()
+                            },
+                            enabled = !hasTipped,
                             modifier = Modifier.weight(1f).height(44.dp),
                             shape = RoundedCornerShape(12.dp),
-                            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.1f)),
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
+                            border = BorderStroke(1.dp, if (hasTipped) Color.White.copy(alpha = 0.05f) else Color.White.copy(alpha = 0.1f)),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = if (hasTipped) Color.Gray else Color.White,
+                                disabledContentColor = Color.Gray
+                            )
                         ) {
                             Text(FormatUtils.formatMerit(amount), fontWeight = FontWeight.Black)
                         }
@@ -468,8 +471,7 @@ private fun TournamentSubmissionBottomSheet(
 private fun InfoMiniBlock(
     label: String,
     value: String,
-    modifier: Modifier = Modifier,
-    primaryGold: Color
+    modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier) {
         Text(
@@ -483,7 +485,7 @@ private fun InfoMiniBlock(
             text = value,
             fontSize = 20.sp,
             fontWeight = FontWeight.Black,
-            color = if (label.contains("MERIT")) primaryGold else Color.White
+            color = if (label.contains("MERIT")) MaterialTheme.colorScheme.primary else Color.White
         )
     }
 }
@@ -496,7 +498,7 @@ private fun TipAmountDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = Color(0xFF1A1A1A),
+        containerColor = MaterialTheme.colorScheme.surface,
         title = { Text("Reward $recipientName", color = Color.White, fontWeight = FontWeight.Black) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {

@@ -432,4 +432,61 @@ class UserRepository(
             .addOnSuccessListener { onSuccess() }
             .addOnFailureListener { onError(it) }
     }
+
+    fun sendGlobalTip(
+        tipperId: String,
+        recipientId: String,
+        amount: Long,
+        onSuccess: () -> Unit,
+        onError: (Exception) -> Unit
+    ) {
+        val tipId = "${tipperId}_${recipientId}"
+        val tipRef = firestore.collection("global_tips").document(tipId)
+
+        firestore.runTransaction { transaction ->
+            val snapshot = transaction.get(tipRef)
+            val now = System.currentTimeMillis()
+            
+            if (snapshot.exists()) {
+                val lastTipped = snapshot.getLong("createdAt") ?: 0L
+                val cooldownMs = 24 * 60 * 60 * 1000L
+                if (now - lastTipped < cooldownMs) {
+                    throw Exception("Cooldown active. You can tip this user again in ${formatCooldown(cooldownMs - (now - lastTipped))}")
+                }
+            }
+
+            val tipData = mapOf(
+                "tipperId" to tipperId,
+                "recipientId" to recipientId,
+                "amount" to amount,
+                "createdAt" to now,
+                "processed" to false
+            )
+            transaction.set(tipRef, tipData)
+        }.addOnSuccessListener { onSuccess() }
+        .addOnFailureListener { onError(it) }
+    }
+
+    private fun formatCooldown(ms: Long): String {
+        val hours = ms / (1000 * 60 * 60)
+        val minutes = (ms / (1000 * 60)) % 60
+        return "${hours}h ${minutes}m"
+    }
+
+    fun checkGlobalTipCooldown(
+        tipperId: String,
+        recipientId: String,
+        onResult: (Long?) -> Unit
+    ) {
+        val tipId = "${tipperId}_${recipientId}"
+        firestore.collection("global_tips").document(tipId).get()
+            .addOnSuccessListener { snapshot ->
+                if (snapshot.exists()) {
+                    onResult(snapshot.getLong("createdAt"))
+                } else {
+                    onResult(null)
+                }
+            }
+            .addOnFailureListener { onResult(null) }
+    }
 }

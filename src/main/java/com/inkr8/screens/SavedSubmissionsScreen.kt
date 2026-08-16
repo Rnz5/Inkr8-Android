@@ -52,7 +52,7 @@ fun SavedSubmissionsScreen(
     if (submissionToDelete != null) {
         AlertDialog(
             onDismissRequest = { submissionToDelete = null },
-            containerColor = Color(0xFF1A1A1A),
+            containerColor = MaterialTheme.colorScheme.surface,
             title = { Text("Dissolve Writing", color = Color.White, fontWeight = FontWeight.Black) },
             text = { Text("This will permanently delete this entry from the Eternal Repository. This action cannot be undone.", color = Color.Gray) },
             confirmButton = {
@@ -61,8 +61,11 @@ fun SavedSubmissionsScreen(
                         submissionToDelete?.let { onDeleteSubmission(it.id) }
                         submissionToDelete = null
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red.copy(alpha = 0.1f), contentColor = Color.Red),
-                    border = borderStroke(1.dp, Color.Red.copy(alpha = 0.2f)),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.1f), 
+                        contentColor = MaterialTheme.colorScheme.error
+                    ),
+                    border = borderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.2f)),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text("Dissolve", fontWeight = FontWeight.Bold)
@@ -77,7 +80,10 @@ fun SavedSubmissionsScreen(
     }
 
     Column(
-        modifier = Modifier.fillMaxSize().background(Color(0xFF0F0F0F)).padding(16.dp)
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(16.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().statusBarsPadding(),
@@ -88,7 +94,7 @@ fun SavedSubmissionsScreen(
                 Text(
                     text = "Eternal Repository",
                     style = MaterialTheme.typography.labelMedium,
-                    color = Color(0xFFDAA520),
+                    color = MaterialTheme.colorScheme.primary,
                     letterSpacing = 2.sp,
                     fontWeight = FontWeight.Black
                 )
@@ -146,7 +152,7 @@ fun SubmissionDetailsDialog(
         Card(
             modifier = Modifier.fillMaxWidth().fillMaxHeight(0.85f),
             shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF0F0F0F)),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background),
             border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.05f))
         ) {
             Column(
@@ -160,7 +166,7 @@ fun SubmissionDetailsDialog(
                     Column {
                         Text(
                             text = submission.gamemode.uppercase(),
-                            color = Color(0xFFFFD700),
+                            color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.Black,
                             fontSize = 12.sp,
                             letterSpacing = 1.sp
@@ -213,9 +219,12 @@ fun SubmissionDetailsDialog(
                         ) {
                             items(submission.wordsUsed) { word ->
                                 Box(
-                                    modifier = Modifier.background(Color(0xFFFFD700).copy(alpha = 0.1f), RoundedCornerShape(8.dp)).border(1.dp, Color(0xFFFFD700).copy(alpha = 0.5f), RoundedCornerShape(8.dp)).padding(horizontal = 12.dp, vertical = 6.dp)
+                                    modifier = Modifier
+                                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), RoundedCornerShape(8.dp))
+                                        .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                                        .padding(horizontal = 12.dp, vertical = 6.dp)
                                 ) {
-                                    Text(text = word.word, color = Color(0xFFFFD700), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                    Text(text = word.word, color = MaterialTheme.colorScheme.primary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                 }
                             }
                         }
@@ -249,8 +258,8 @@ fun SubmissionDetailsDialog(
                     OutlinedButton(
                         onClick = { onDeleteClick(submission) },
                         modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Red),
-                        border = borderStroke(1.dp, Color.Red.copy(alpha = 0.5f)),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                        border = borderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.5f)),
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Text("Dissolve", fontWeight = FontWeight.Bold)
@@ -278,7 +287,7 @@ fun SavedSubmissionItem(submission: Submissions, onClick: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondary),
         border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.05f)),
         onClick = onClick
     ) {
@@ -292,7 +301,7 @@ fun SavedSubmissionItem(submission: Submissions, onClick: () -> Unit) {
                     Text(
                         text = submission.gamemode.uppercase(),
                         fontWeight = FontWeight.Black,
-                        color = Color(0xFFFFD700),
+                        color = MaterialTheme.colorScheme.primary,
                         fontSize = 11.sp,
                         letterSpacing = 1.sp
                     )
@@ -330,9 +339,12 @@ fun SavedSubmissionItem(submission: Submissions, onClick: () -> Unit) {
                     Text(text = "${submission.wordCount} Words", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
                 }
                 Box(
-                    modifier = Modifier.background(Color(0xFFFFD700).copy(alpha = 0.2f), RoundedCornerShape(4.dp)).border(1.dp, Color(0xFFFFD700), RoundedCornerShape(4.dp)).padding(horizontal = 6.dp, vertical = 2.dp)
+                    modifier = Modifier
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
+                        .border(1.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(4.dp))
+                        .padding(horizontal = 6.dp, vertical = 2.dp)
                 ) {
-                    Text(text = "ETERNAL", fontSize = 9.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFFDAA520))
+                    Text(text = "ETERNAL", fontSize = 9.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
                 }
             }
         }

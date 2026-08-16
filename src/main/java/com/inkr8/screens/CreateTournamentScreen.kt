@@ -59,14 +59,10 @@ fun CreateTournamentScreen(
     val displayedSystemFee = if (prizePool > 0) projection?.systemFee ?: 0L else 0L
     val totalCost = displayedPrizePool + displayedSystemFee
 
-    val primaryGold = Color(0xFFFFD700)
-    val backgroundDark = Color(0xFF0F0F0F)
-    val surfaceDark = Color(0xFF1A1A1A)
-
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(backgroundDark)
+            .background(MaterialTheme.colorScheme.background)
             .statusBarsPadding()
             .navigationBarsPadding()
             .verticalScroll(rememberScrollState())
@@ -119,7 +115,7 @@ fun CreateTournamentScreen(
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = surfaceDark),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             border = BorderStroke(1.dp, Color.White.copy(alpha = 0.05f))
         ) {
             Column(
@@ -144,9 +140,9 @@ fun CreateTournamentScreen(
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedTextColor = Color.White,
                             unfocusedTextColor = Color.White,
-                            focusedBorderColor = primaryGold.copy(alpha = 0.5f),
+                            focusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
                             unfocusedBorderColor = Color.White.copy(alpha = 0.1f),
-                            cursorColor = primaryGold
+                            cursorColor = MaterialTheme.colorScheme.primary
                         ),
                         shape = RoundedCornerShape(12.dp)
                     )
@@ -169,15 +165,13 @@ fun CreateTournamentScreen(
                             text = "Standard",
                             selected = gamemode == "STANDARD",
                             onClick = { gamemode = "STANDARD" },
-                            modifier = Modifier.weight(1f),
-                            primaryGold = primaryGold
+                            modifier = Modifier.weight(1f)
                         )
                         GamemodeSelectorChip(
                             text = "On-Topic",
                             selected = gamemode == "ON_TOPIC",
                             onClick = { gamemode = "ON_TOPIC" },
-                            modifier = Modifier.weight(1f),
-                            primaryGold = primaryGold
+                            modifier = Modifier.weight(1f)
                         )
                     }
                 }
@@ -202,7 +196,7 @@ fun CreateTournamentScreen(
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedTextColor = Color.White,
                                 unfocusedTextColor = Color.White,
-                                focusedBorderColor = primaryGold.copy(alpha = 0.5f),
+                                focusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
                                 unfocusedBorderColor = Color.White.copy(alpha = 0.1f)
                             ),
                             shape = RoundedCornerShape(12.dp)
@@ -224,7 +218,7 @@ fun CreateTournamentScreen(
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedTextColor = Color.White,
                                 unfocusedTextColor = Color.White,
-                                focusedBorderColor = primaryGold.copy(alpha = 0.5f),
+                                focusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
                                 unfocusedBorderColor = Color.White.copy(alpha = 0.1f)
                             ),
                             shape = RoundedCornerShape(12.dp)
@@ -239,7 +233,7 @@ fun CreateTournamentScreen(
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = surfaceDark),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             border = BorderStroke(1.dp, Color.White.copy(alpha = 0.05f))
         ) {
             Column(
@@ -287,13 +281,11 @@ fun CreateTournamentScreen(
                 ) {
                     EconomyStatBlock(
                         label = "Prize Pool",
-                        value = FormatUtils.formatMerit(displayedPrizePool),
-                        primaryGold = primaryGold
+                        value = FormatUtils.formatMerit(displayedPrizePool)
                     )
                     EconomyStatBlock(
                         label = "Total Cost",
-                        value = FormatUtils.formatMerit(totalCost),
-                        primaryGold = primaryGold
+                        value = FormatUtils.formatMerit(totalCost)
                     )
                 }
             }
@@ -341,16 +333,15 @@ private fun GamemodeSelectorChip(
     text: String,
     selected: Boolean,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    primaryGold: Color
+    modifier: Modifier = Modifier
 ) {
     val containerColor = if (selected) Color.White.copy(alpha = 0.05f) else Color.Transparent
-    val contentColor = if (selected) primaryGold else Color.Gray
+    val contentColor = if (selected) MaterialTheme.colorScheme.primary else Color.Gray
 
     Box(
         modifier = modifier.clip(RoundedCornerShape(12.dp)).background(containerColor).border(
                 width = 1.dp,
-                color = if (selected) primaryGold.copy(alpha = 0.4f) else Color.White.copy(alpha = 0.1f),
+                color = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.4f) else Color.White.copy(alpha = 0.1f),
                 shape = RoundedCornerShape(12.dp)
             ).clickable(onClick = onClick).padding(vertical = 12.dp),
         contentAlignment = Alignment.Center
@@ -367,8 +358,7 @@ private fun GamemodeSelectorChip(
 @Composable
 private fun EconomyStatBlock(
     label: String,
-    value: String,
-    primaryGold: Color
+    value: String
 ) {
     Column {
         Text(

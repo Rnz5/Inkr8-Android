@@ -41,9 +41,9 @@ fun SubmissionsScreen(
         val saveCost = EconomyConfig.getSaveSubmissionCost(totalSavedCount)
         AlertDialog(
             onDismissRequest = { submissionToSave = null },
-            containerColor = Color(0xFF1A1A1A),
+            containerColor = MaterialTheme.colorScheme.surface,
             title = { Text("Protect Writing", color = Color.White, fontWeight = FontWeight.Black) },
-            text = { Text("Moving this entry to the Eternal Repository will cost ${FormatUtils.formatMerit(saveCost.toLong())} Merit. It will be removed from the Archive and permanently preserved.", color = Color.Gray) },
+            text = { Text("Moving this entry to the Eternal Repository will cost ${FormatUtils.formatMerit(saveCost)} Merit. It will be removed from the Archive and permanently preserved.", color = Color.Gray) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -64,7 +64,10 @@ fun SubmissionsScreen(
     }
 
     Column(
-        modifier = Modifier.fillMaxSize().background(Color(0xFF0F0F0F)).padding(16.dp)
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(16.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().statusBarsPadding(),
@@ -75,7 +78,7 @@ fun SubmissionsScreen(
                 Text(
                     text = "System Archive",
                     style = MaterialTheme.typography.labelMedium,
-                    color = Color(0xFFFFD700),
+                    color = MaterialTheme.colorScheme.primary,
                     letterSpacing = 2.sp,
                     fontWeight = FontWeight.Black
                 )
@@ -135,7 +138,7 @@ fun SubmissionItem(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.05f))
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
@@ -148,7 +151,7 @@ fun SubmissionItem(
                     Text(
                         text = submission.gamemode.uppercase(),
                         fontWeight = FontWeight.Black,
-                        color = Color(0xFFFFD700),
+                        color = MaterialTheme.colorScheme.primary,
                         fontSize = 11.sp,
                         letterSpacing = 1.sp
                     )
@@ -194,7 +197,7 @@ fun SubmissionItem(
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
                     modifier = Modifier.height(32.dp)
                 ) {
-                    Text("SAVE • ${FormatUtils.formatMerit(saveCost.toLong())}", fontSize = 9.sp, fontWeight = FontWeight.Black)
+                    Text("SAVE • ${FormatUtils.formatMerit(saveCost)}", fontSize = 9.sp, fontWeight = FontWeight.Black)
                 }
             }
         }

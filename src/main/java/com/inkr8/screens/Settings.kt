@@ -32,14 +32,10 @@ fun Settings(
     var showChangeUsernameDialog by remember { mutableStateOf(false) }
     var showExpandCapDialog by remember { mutableStateOf(false) }
 
-    val primaryGold = Color(0xFFFFD700)
-    val backgroundDark = Color(0xFF0F0F0F)
-    val surfaceDark = Color(0xFF1A1A1A)
-
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            containerColor = surfaceDark,
+            containerColor = MaterialTheme.colorScheme.surface,
             title = { Text("Dissolve Identity", color = Color.White) },
             text = { Text("This will permanently delete your account and release your username. This action cannot be undone.", color = Color.Gray) },
             confirmButton = {
@@ -54,12 +50,12 @@ fun Settings(
     if (showChangeUsernameDialog) {
         AlertDialog(
             onDismissRequest = { showChangeUsernameDialog = false },
-            containerColor = surfaceDark,
+            containerColor = MaterialTheme.colorScheme.surface,
             title = { Text("Rebrand Identity", color = Color.White) },
             text = { Text("Changing your username will cost ${FormatUtils.formatMerit(EconomyConfig.CHANGE_USERNAME.toLong())} Merit. Continue?", color = Color.Gray) },
             confirmButton = {
                 TextButton(onClick = { showChangeUsernameDialog = false; onChangeUsername() }) {
-                    Text("Continue", color = primaryGold, fontWeight = FontWeight.Bold)
+                    Text("Continue", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = { TextButton(onClick = { showChangeUsernameDialog = false }) { Text("Cancel", color = Color.White) } }
@@ -70,12 +66,12 @@ fun Settings(
         val expandCost = (user.meritCap * 0.25).toLong()
         AlertDialog(
             onDismissRequest = { showExpandCapDialog = false },
-            containerColor = surfaceDark,
-            title = { Text("Expand Merit Cap", color = primaryGold, fontWeight = FontWeight.Black) },
+            containerColor = MaterialTheme.colorScheme.surface,
+            title = { Text("Expand Merit Cap", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Black) },
             text = { 
                 Column {
                     Text("Current Cap: ${FormatUtils.formatMerit(user.meritCap)}", color = Color.White)
-                    Text("Expansion Cost: ${FormatUtils.formatMerit(expandCost)} Merit", color = primaryGold, fontWeight = FontWeight.Bold)
+                    Text("Expansion Cost: ${FormatUtils.formatMerit(expandCost)} Merit", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(8.dp))
                     Text("This will increase your liquid capacity by 10,000 merit. Extra earnings are currently stored in SRR (Hold).", color = Color.Gray, fontSize = 12.sp)
                 }
@@ -93,7 +89,7 @@ fun Settings(
     }
 
     Scaffold(
-        containerColor = backgroundDark,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             Row(
                 modifier = Modifier.fillMaxWidth().statusBarsPadding().padding(16.dp),
@@ -150,10 +146,10 @@ fun Settings(
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Red.copy(alpha = 0.1f),
-                    contentColor = Color.Red
+                    containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.1f),
+                    contentColor = MaterialTheme.colorScheme.error
                 ),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color.Red.copy(alpha = 0.2f))
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.2f))
             ) {
                 Text("DISSOLVE IDENTITY", fontWeight = FontWeight.Black, letterSpacing = 2.sp)
             }
@@ -172,7 +168,7 @@ fun SettingsItem(
 ) {
     Surface(
         onClick = onClick,
-        color = Color(0xFF1A1A1A),
+        color = MaterialTheme.colorScheme.secondary,
         shape = RoundedCornerShape(16.dp),
         modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
         border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.05f))

@@ -22,9 +22,6 @@ fun PlacementRevealScreen(
     league: League,
     onContinue: () -> Unit
 ) {
-    val primaryGold = Color(0xFFFFD700)
-    val backgroundDark = Color(0xFF0F0F0F)
-
     var showLeague by remember { mutableStateOf(false) }
     var showVerdict by remember { mutableStateOf(false) }
     var showButton by remember { mutableStateOf(false) }
@@ -61,7 +58,9 @@ fun PlacementRevealScreen(
     }
 
     Box(
-        modifier = Modifier.fillMaxSize().background(backgroundDark),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -70,7 +69,7 @@ fun PlacementRevealScreen(
         ) {
             Text(
                 text = "Calibration Complete",
-                color = primaryGold.copy(alpha = 0.6f),
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Black,
                 letterSpacing = 3.sp
@@ -80,7 +79,7 @@ fun PlacementRevealScreen(
 
             Text(
                 text = league.displayName.uppercase(),
-                color = primaryGold,
+                color = MaterialTheme.colorScheme.primary,
                 fontSize = 52.sp,
                 fontWeight = FontWeight.Black,
                 letterSpacing = 6.sp,

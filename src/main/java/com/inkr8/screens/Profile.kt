@@ -38,6 +38,7 @@ fun Profile(
     user: Users,
     isOwner: Boolean,
     pantheonPosition: Int?,
+    lastTippedTimestamp: Long? = null,
     onNavigateBack: () -> Unit,
     onNavigateToSubmissions: () -> Unit,
     onNavigateToSavedSubmissions: () -> Unit,
@@ -50,9 +51,15 @@ fun Profile(
     var showTipDialog by remember { mutableStateOf(false) }
     var isReputationRevealed by remember { mutableStateOf(false) }
 
-    val primaryGold = Color(0xFFFFD700)
-    val backgroundDark = Color(0xFF0F0F0F)
-    val surfaceDark = Color(0xFF1A1A1A)
+    val cooldownMs = 24 * 60 * 60 * 1000L
+    val now = System.currentTimeMillis()
+    val isCooldownActive = lastTippedTimestamp != null && (now - lastTippedTimestamp < cooldownMs)
+    
+    val remainingCooldownText = if (isCooldownActive && lastTippedTimestamp != null) {
+        val remaining = cooldownMs - (now - lastTippedTimestamp)
+        val hours = remaining / (1000 * 60 * 60)
+        "COOLDOWN ${hours}H"
+    } else null
 
     if (showTipDialog) {
         TipAmountDialog(
@@ -66,10 +73,13 @@ fun Profile(
     }
 
     Column(
-        modifier = Modifier.fillMaxSize().background(backgroundDark).verticalScroll(scrollState)
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .verticalScroll(scrollState)
     ) {
         Box(modifier = Modifier.fillMaxWidth().height(180.dp)) {
-            Box(modifier = Modifier.fillMaxSize().background(Color(0xFF0A0A0A)))
+            Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant))
             
             Row(
                 modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -102,7 +112,15 @@ fun Profile(
                 AsyncImage(
                     model = user.profileImageURL.ifEmpty { R.drawable.defaultpng },
                     contentDescription = null,
-                    modifier = Modifier.size(100.dp).clip(CircleShape).border(3.dp, if(user.isPhilosopher) primaryGold else Color(0xFFC0C0C0), CircleShape).background(surfaceDark),
+                    modifier = Modifier
+                        .size(100.dp)
+                        .clip(CircleShape)
+                        .border(
+                            3.dp,
+                            if (user.isPhilosopher) MaterialTheme.colorScheme.primary else Color(0xFFC0C0C0),
+                            CircleShape
+                        )
+                        .background(MaterialTheme.colorScheme.surface),
                     contentScale = ContentScale.Crop,
                     error = painterResource(id = R.drawable.defaultpng),
                     placeholder = painterResource(id = R.drawable.defaultpng)
@@ -124,7 +142,7 @@ fun Profile(
                 if (user.isPhilosopher) {
                     Text(
                         text = "Philosopher",
-                        color = primaryGold,
+                        color = MaterialTheme.colorScheme.primary,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Black,
                         letterSpacing = 4.sp
@@ -144,7 +162,7 @@ fun Profile(
             Card(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).offset(y = (-20).dp),
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = surfaceDark),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.05f))
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
@@ -163,7 +181,7 @@ fun Profile(
                             }
                             Text(
                                 text = meritText,
-                                color = if (isDebt) Color.Red else Color.White,
+                                color = if (isDebt) MaterialTheme.colorScheme.error else Color.White,
                                 fontSize = 28.sp,
                                 fontWeight = FontWeight.Black
                             )
@@ -172,12 +190,12 @@ fun Profile(
                     
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    val progress = (user.merit.coerceAtLeast(0).toFloat() / user.meritCap.toFloat()).coerceIn(0f, 1f)
+                    val progress = (user.merit.coerceAtLeast(0).toFloat() / user.meritCap.coerceAtLeast(1).toFloat()).coerceIn(0f, 1f)
                     Column {
                         LinearProgressIndicator(
                             progress = { progress },
                             modifier = Modifier.fillMaxWidth().height(6.dp).clip(CircleShape),
-                            color = primaryGold,
+                            color = MaterialTheme.colorScheme.primary,
                             trackColor = Color.White.copy(alpha = 0.05f)
                         )
                         Row(
@@ -212,7 +230,7 @@ fun Profile(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
-                                Text("SRR (HOLD)", color = primaryGold.copy(alpha = 0.6f), fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                                Text("SRR (HOLD)", color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f), fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                                 Text(
                                     text = FormatUtils.formatMerit(user.meritHold),
                                     color = Color.White,
@@ -236,7 +254,7 @@ fun Profile(
         Card(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(top = if (isOwner) 8.dp else 0.dp).offset(y = if (isOwner) 0.dp else (-20).dp),
             shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(containerColor = surfaceDark)
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
             if (isOwner) {
                 Row(
@@ -297,7 +315,7 @@ fun Profile(
         Card(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).height(160.dp),
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = surfaceDark),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.05f))
         ) {
             if (user.recentScores.size < 2) {
@@ -305,7 +323,7 @@ fun Profile(
                     Text("Awaiting competitive data...", color = Color.DarkGray, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 }
             } else {
-                PerformanceChart(scores = user.recentScores, lineIndicatorColor = primaryGold)
+                PerformanceChart(scores = user.recentScores, lineIndicatorColor = MaterialTheme.colorScheme.primary)
             }
         }
 
@@ -327,8 +345,8 @@ fun Profile(
                     title = "Eternal Repository",
                     subtitle = "Locked and protected entries",
                     onClick = onNavigateToSavedSubmissions,
-                    containerColor = surfaceDark,
-                    contentColor = primaryGold,
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.primary,
                     showBorder = true
                 )
             }
@@ -338,7 +356,7 @@ fun Profile(
                 if (isReputationRevealed) {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = surfaceDark)
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                     ) {
                         Text(
                             text = "Reputation is fully integrated with system standing. Low standing increases entry fees and limits access to tournaments.",
@@ -368,12 +386,18 @@ fun Profile(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Button(
-                        onClick = { showTipDialog = true },
+                        onClick = { if (!isCooldownActive) showTipDialog = true },
+                        enabled = !isCooldownActive,
                         modifier = Modifier.fillMaxWidth().height(56.dp),
                         shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black)
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (isCooldownActive) Color.White.copy(alpha = 0.05f) else Color.White,
+                            contentColor = if (isCooldownActive) Color.Gray else Color.Black,
+                            disabledContainerColor = Color.White.copy(alpha = 0.05f),
+                            disabledContentColor = Color.Gray
+                        )
                     ) {
-                        Text("Tip ${user.name}", fontWeight = FontWeight.Black, fontSize = 14.sp)
+                        Text(remainingCooldownText ?: "Tip ${user.name}", fontWeight = FontWeight.Black, fontSize = 14.sp)
                     }
                 }
             }
@@ -482,7 +506,7 @@ fun StatItem(label: String, value: String, subValue: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(text = label, style = MaterialTheme.typography.labelSmall, color = Color.Gray, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
         Text(text = value, fontSize = 20.sp, fontWeight = FontWeight.Black, color = Color.White)
-        Text(text = subValue, fontSize = 9.sp, color = Color(0xFFFFD700), fontWeight = FontWeight.Black, letterSpacing = 1.sp)
+        Text(text = subValue, fontSize = 9.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
     }
 }
 
@@ -491,7 +515,7 @@ fun BattleStatSmall(modifier: Modifier, label: String, value: String) {
     Card(
         modifier = modifier.height(60.dp),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A))
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -524,7 +548,7 @@ private fun TipAmountDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = Color(0xFF1A1A1A),
+        containerColor = MaterialTheme.colorScheme.surface,
         title = { Text("Tip $recipientName", color = Color.White, fontWeight = FontWeight.Bold) },
         text = {
             Row(

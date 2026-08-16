@@ -1,7 +1,5 @@
 package com.inkr8.utils
 
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -30,16 +28,17 @@ fun UserHeaderCard(
     pantheonPosition: Int?,
     onClick: () -> Unit
 ) {
-    val primaryGold = Color(0xFFFFD700)
-    val surfaceDark = Color(0xFF1A1A1A)
-    val backgroundDark = Color(0xFF0F0F0F)
     val league = League.fromRating(user.rating)
     
     Card(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).clip(RoundedCornerShape(20.dp)).clickable(onClick = onClick),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = surfaceDark),
-        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.05f))
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.05f))
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -50,19 +49,18 @@ fun UserHeaderCard(
                     AsyncImage(
                         model = user.profileImageURL.ifEmpty { R.drawable.pfpexample },
                         contentDescription = "Profile picture",
-                        modifier = Modifier.size(54.dp).clip(CircleShape).border(
+                        modifier = Modifier
+                            .size(54.dp)
+                            .clip(CircleShape)
+                            .border(
                                 width = 2.dp,
-                                color = if (user.isPhilosopher) primaryGold else Color.White.copy(alpha = 0.1f),
+                                color = if (user.isPhilosopher) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.1f),
                                 shape = CircleShape
                             ),
                         contentScale = ContentScale.Crop,
                         error = painterResource(id = R.drawable.pfpexample),
                         placeholder = painterResource(id = R.drawable.pfpexample)
                     )
-                    
-                    if (user.isPhilosopher) {
-                        // cosmetic, someday
-                    }
                 }
 
                 Spacer(modifier = Modifier.width(14.dp))
@@ -81,7 +79,7 @@ fun UserHeaderCard(
                         Text(
                             text = if (pantheonPosition != null) "Pantheon #$pantheonPosition" else league.displayName.uppercase(),
                             style = MaterialTheme.typography.labelSmall,
-                            color = if (pantheonPosition != null || user.isPhilosopher) primaryGold else Color.Gray,
+                            color = if (pantheonPosition != null || user.isPhilosopher) MaterialTheme.colorScheme.primary else Color.Gray,
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 1.sp
                         )
@@ -97,7 +95,7 @@ fun UserHeaderCard(
                             Text(
                                 text = "Philosopher",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = primaryGold,
+                                color = MaterialTheme.colorScheme.primary,
                                 fontWeight = FontWeight.Black,
                                 fontSize = 8.sp,
                                 letterSpacing = 1.sp
@@ -116,7 +114,7 @@ fun UserHeaderCard(
                     Text(
                         text = "Liquid Merit",
                         style = MaterialTheme.typography.labelSmall,
-                        color = primaryGold.copy(alpha = 0.7f),
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
                         fontWeight = FontWeight.Bold,
                         fontSize = 8.sp,
                         letterSpacing = 1.sp
@@ -126,19 +124,24 @@ fun UserHeaderCard(
             
             Spacer(modifier = Modifier.height(12.dp))
 
-            val progress = (user.merit.toFloat() / user.meritCap.toFloat()).coerceIn(0f, 1f)
+            val progress = (user.merit.toFloat() / user.meritCap.coerceAtLeast(1).toFloat()).coerceIn(0f, 1f)
             val isNearCap = progress > 0.9f
             
             Column {
                 LinearProgressIndicator(
                     progress = { progress },
-                    modifier = Modifier.fillMaxWidth().height(4.dp).clip(CircleShape),
-                    color = if (isNearCap) Color.Red else primaryGold,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(4.dp)
+                        .clip(CircleShape),
+                    color = if (isNearCap) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
                     trackColor = Color.White.copy(alpha = 0.05f)
                 )
                 
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -153,13 +156,16 @@ fun UserHeaderCard(
                     if (user.meritHold > 0) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Box(
-                                modifier = Modifier.size(4.dp).clip(CircleShape).background(primaryGold)
+                                modifier = Modifier
+                                    .size(4.dp)
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.primary)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 text = "SRR Active: ${FormatUtils.formatMerit(user.meritHold)}",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = primaryGold,
+                                color = MaterialTheme.colorScheme.primary,
                                 fontSize = 8.sp,
                                 fontWeight = FontWeight.Black
                             )

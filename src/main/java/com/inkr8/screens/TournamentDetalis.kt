@@ -62,10 +62,6 @@ fun TournamentDetails(
     val analyticsContext = LocalContext.current
     val firebaseAnalytics = remember { FirebaseAnalytics.getInstance(analyticsContext) }
 
-    val primaryGold = Color(0xFFFFD700)
-    val backgroundDark = Color(0xFF0F0F0F)
-    val surfaceDark = Color(0xFF1A1A1A)
-
     val rewardPercentages =
         TournamentRewardCalculator.calculateRewardPercentages(tournament.maxPlayers.toInt())
 
@@ -85,7 +81,7 @@ fun TournamentDetails(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(backgroundDark)
+            .background(MaterialTheme.colorScheme.background)
             .statusBarsPadding()
             .navigationBarsPadding()
             .verticalScroll(rememberScrollState())
@@ -132,7 +128,7 @@ fun TournamentDetails(
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = surfaceDark),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             border = BorderStroke(1.dp, Color.White.copy(alpha = 0.05f))
         ) {
             Column(
@@ -166,8 +162,7 @@ fun TournamentDetails(
                                 merit = FormatUtils.formatMerit(merit),
                                 percent = FormatUtils.formatScore(score),
                                 participant = entry.user?.name?.ifBlank { null } ?: entry.submission.authorId,
-                                onClick = { onOpenSubmission(entry.submission) },
-                                primaryGold = primaryGold
+                                onClick = { onOpenSubmission(entry.submission) }
                             )
                         }
                     } else {
@@ -178,8 +173,7 @@ fun TournamentDetails(
                                 merit = FormatUtils.formatMerit(merit),
                                 percent = FormatUtils.formatPercentage(percent * 100),
                                 participant = "TBD",
-                                onClick = {},
-                                primaryGold = primaryGold
+                                onClick = {}
                             )
                         }
                     }
@@ -194,14 +188,12 @@ fun TournamentDetails(
             formattedPrizePool = formattedPrizePool,
             formattedEntryFee = formattedEntryFee,
             timeText = timeText,
-            onHostClick = onHostClick,
-            primaryGold = primaryGold,
-            surfaceDark = surfaceDark
+            onHostClick = onHostClick
         )
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        TournamentRequirementsSection(tournament = tournament, surfaceDark = surfaceDark)
+        TournamentRequirementsSection(tournament = tournament)
 
         Spacer(modifier = Modifier.height(48.dp))
 
@@ -312,11 +304,10 @@ private fun RewardDistributionRow(
     merit: String,
     percent: String,
     participant: String,
-    onClick: () -> Unit,
-    primaryGold: Color
+    onClick: () -> Unit
 ) {
     val placeColor = when (place) {
-        "1st" -> primaryGold
+        "1st" -> MaterialTheme.colorScheme.primary
         "2nd" -> Color.LightGray
         "3rd" -> Color(0xFFCD7F32)
         else -> Color.Gray
@@ -370,14 +361,12 @@ private fun TournamentOverviewSection(
     formattedPrizePool: String,
     formattedEntryFee: String,
     timeText: String,
-    onHostClick: () -> Unit,
-    primaryGold: Color,
-    surfaceDark: Color
+    onHostClick: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = surfaceDark),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = BorderStroke(1.dp, Color.White.copy(alpha = 0.05f))
     ) {
         Column(
@@ -421,11 +410,11 @@ private fun TournamentOverviewSection(
                 Spacer(modifier = Modifier.weight(1f))
                 
                 Box(
-                    modifier = Modifier.clip(RoundedCornerShape(6.dp)).border(1.dp, primaryGold.copy(alpha = 0.2f), RoundedCornerShape(6.dp)).padding(horizontal = 8.dp, vertical = 4.dp)
+                    modifier = Modifier.clip(RoundedCornerShape(6.dp)).border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f), RoundedCornerShape(6.dp)).padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Text(
                         text = tournament.gamemode.replace("_", " "),
-                        color = primaryGold,
+                        color = MaterialTheme.colorScheme.primary,
                         fontSize = 9.sp,
                         fontWeight = FontWeight.Black,
                         letterSpacing = 1.sp
@@ -437,7 +426,7 @@ private fun TournamentOverviewSection(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                OverviewStatBlock(label = "PRIZE POOL", value = formattedPrizePool, color = primaryGold)
+                OverviewStatBlock(label = "PRIZE POOL", value = formattedPrizePool, color = MaterialTheme.colorScheme.primary)
                 OverviewStatBlock(label = "ENTRY FEE", value = "$formattedEntryFee Merit", color = Color.White)
             }
 
@@ -490,13 +479,12 @@ fun OverviewStatBlock(
 
 @Composable
 private fun TournamentRequirementsSection(
-    tournament: Tournament,
-    surfaceDark: Color
+    tournament: Tournament
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = surfaceDark),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = BorderStroke(1.dp, Color.White.copy(alpha = 0.05f))
     ) {
         Column(
