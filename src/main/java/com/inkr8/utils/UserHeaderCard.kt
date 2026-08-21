@@ -30,12 +30,14 @@ fun UserHeaderCard(
 ) {
     val league = League.fromRating(user.rating)
     
+    val pfpModel: Any = when {
+        user.id == "R8" -> R.drawable.r8pfp
+        user.profileImageURL.isNotEmpty() -> user.profileImageURL
+        else -> R.drawable.defaultpng
+    }
+
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-            .clip(RoundedCornerShape(20.dp))
-            .clickable(onClick = onClick),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).clip(RoundedCornerShape(20.dp)).clickable(onClick = onClick),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.05f))
@@ -47,19 +49,16 @@ fun UserHeaderCard(
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     AsyncImage(
-                        model = user.profileImageURL.ifEmpty { R.drawable.pfpexample },
+                        model = pfpModel,
                         contentDescription = "Profile picture",
-                        modifier = Modifier
-                            .size(54.dp)
-                            .clip(CircleShape)
-                            .border(
+                        modifier = Modifier.size(54.dp).clip(CircleShape).border(
                                 width = 2.dp,
                                 color = if (user.isPhilosopher) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.1f),
                                 shape = CircleShape
                             ),
                         contentScale = ContentScale.Crop,
-                        error = painterResource(id = R.drawable.pfpexample),
-                        placeholder = painterResource(id = R.drawable.pfpexample)
+                        error = painterResource(id = R.drawable.defaultpng),
+                        placeholder = painterResource(id = R.drawable.defaultpng)
                     )
                 }
 
@@ -130,18 +129,13 @@ fun UserHeaderCard(
             Column {
                 LinearProgressIndicator(
                     progress = { progress },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(4.dp)
-                        .clip(CircleShape),
+                    modifier = Modifier.fillMaxWidth().height(4.dp).clip(CircleShape),
                     color = if (isNearCap) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
                     trackColor = Color.White.copy(alpha = 0.05f)
                 )
                 
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 4.dp),
+                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -156,10 +150,7 @@ fun UserHeaderCard(
                     if (user.meritHold > 0) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Box(
-                                modifier = Modifier
-                                    .size(4.dp)
-                                    .clip(CircleShape)
-                                    .background(MaterialTheme.colorScheme.primary)
+                                modifier = Modifier.size(4.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(

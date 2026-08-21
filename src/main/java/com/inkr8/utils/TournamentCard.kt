@@ -60,6 +60,12 @@ fun TournamentCard(
 
     val formattedPrizePool = FormatUtils.formatMerit(tournament.prizePool)
 
+    val pfpModel: Any = when {
+        tournament.creatorId == "R8" -> R.drawable.r8pfp
+        tournament.creatorImageURL.isNotEmpty() -> tournament.creatorImageURL
+        else -> R.drawable.defaultpng
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).clickable(onClick = onClick),
         shape = RoundedCornerShape(20.dp),
@@ -153,12 +159,12 @@ fun TournamentCard(
                     modifier = Modifier.clip(RoundedCornerShape(12.dp)).clickable { onHostClick() }.padding(vertical = 4.dp, horizontal = 0.dp)
                 ) {
                     AsyncImage(
-                        model = tournament.creatorImageURL.ifEmpty { R.drawable.pfpexample },
+                        model = pfpModel,
                         contentDescription = null,
                         modifier = Modifier.size(32.dp).clip(CircleShape).border(1.dp, Color.White.copy(alpha = 0.1f), CircleShape),
                         contentScale = ContentScale.Crop,
-                        error = painterResource(id = R.drawable.pfpexample),
-                        placeholder = painterResource(id = R.drawable.pfpexample)
+                        error = painterResource(id = R.drawable.defaultpng),
+                        placeholder = painterResource(id = R.drawable.defaultpng)
                     )
 
                     Spacer(modifier = Modifier.width(10.dp))

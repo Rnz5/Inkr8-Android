@@ -220,6 +220,12 @@ private fun TournamentResultRow(
         else -> Color.Gray
     }
 
+    val pfpModel: Any = when {
+        entry.submission.authorId == "R8" -> R.drawable.r8pfp
+        entry.user?.profileImageURL?.isNotEmpty() == true -> entry.user.profileImageURL
+        else -> R.drawable.defaultpng
+    }
+
     if (showSubmissionSheet) {
         TournamentSubmissionBottomSheet(
             tournament = tournament,
@@ -267,12 +273,12 @@ private fun TournamentResultRow(
             verticalAlignment = Alignment.CenterVertically
         ) {
             AsyncImage(
-                model = entry.user?.profileImageURL?.ifEmpty { R.drawable.pfpexample } ?: R.drawable.pfpexample,
+                model = pfpModel,
                 contentDescription = null,
                 modifier = Modifier.size(28.dp).clip(CircleShape).border(1.dp, Color.White.copy(alpha = 0.1f), CircleShape),
                 contentScale = ContentScale.Crop,
-                error = painterResource(id = R.drawable.pfpexample),
-                placeholder = painterResource(id = R.drawable.pfpexample)
+                error = painterResource(id = R.drawable.defaultpng),
+                placeholder = painterResource(id = R.drawable.defaultpng)
             )
 
             Spacer(modifier = Modifier.width(10.dp))
@@ -343,6 +349,12 @@ private fun TournamentSubmissionBottomSheet(
     val evaluation = submission.evaluation
     val displayName = entry.user?.name?.ifBlank { null } ?: submission.authorId
 
+    val pfpModel: Any = when {
+        submission.authorId == "R8" -> R.drawable.r8pfp
+        entry.user?.profileImageURL?.isNotEmpty() == true -> entry.user.profileImageURL
+        else -> R.drawable.defaultpng
+    }
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         containerColor = MaterialTheme.colorScheme.secondary,
@@ -356,12 +368,12 @@ private fun TournamentSubmissionBottomSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 AsyncImage(
-                    model = entry.user?.profileImageURL?.ifEmpty { R.drawable.pfpexample } ?: R.drawable.pfpexample,
+                    model = pfpModel,
                     contentDescription = null,
                     modifier = Modifier.size(48.dp).clip(CircleShape).border(1.dp, Color.White.copy(alpha = 0.1f), CircleShape),
                     contentScale = ContentScale.Crop,
-                    error = painterResource(id = R.drawable.pfpexample),
-                    placeholder = painterResource(id = R.drawable.pfpexample)
+                    error = painterResource(id = R.drawable.defaultpng),
+                    placeholder = painterResource(id = R.drawable.defaultpng)
                 )
 
                 Spacer(modifier = Modifier.width(16.dp))
