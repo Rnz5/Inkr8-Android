@@ -1,7 +1,7 @@
 package com.inkr8.utils
 
 object SystemConfig {
-    const val APP_VERSION = "pre-beta v0.6.5"
+    const val APP_VERSION = "pre-beta v0.6.6"
 
     //AdMob IDs (testing)
     const val ADMOB_APP_ID = "ca-app-pub-8013473658949032~8188988578"

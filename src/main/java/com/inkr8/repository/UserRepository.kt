@@ -80,50 +80,24 @@ class UserRepository(
     ) {
         val docRef = usersCollection.document(uid)
 
-        docRef.get()
-            .addOnSuccessListener { snapshot ->
-                if (snapshot.exists()) {
-                    val user = snapshot.toObject(Users::class.java)
-                    if (user != null) {
-                        onReady(user)
-                    }
-                } else {
-                    val newUser = Users(
-                        id = uid,
-                        name = "",
-                        email = email,
-                        merit = 1000,
-                        rating = 0,
-                        reputation = 0,
-                        bestScore = 0.0,
-                        submissionsCount = 0,
-                        profileImageURL = "",
-                        bannerImageURL = "",
-                        achievements = emptyList(),
-                        joinedDate = System.currentTimeMillis(),
-                        rankedWinStreak = 0,
-                        rankedLossStreak = 0,
-                        currentlyInRanked = false,
-                        rankedSessionStartedAt = null,
-                        tournamentsPlayed = 0,
-                        tournamentsWon = 0,
-                        totalMeritEarned = 0,
-                        tipsReceived = 0,
-                        isPhilosopher = false,
-                        philosopherSince = null,
-                        hasChosenUsername = false
-                    )
-
-                    docRef.set(newUser)
-                        .addOnSuccessListener {
-                            onReady(newUser)
-                        }
-                        .addOnFailureListener { it.printStackTrace() }
-                }
+        firestore.runTransaction { transaction ->
+            val snapshot = transaction.get(docRef)
+            if (snapshot.exists()) {
+                snapshot.toObject(Users::class.java) ?: throw Exception("Data corruption: User exists but could not be parsed.")
+            } else {
+                val newUser = Users(
+                    id = uid,
+                    email = email,
+                    name = "" // Use name="" as a fallback, actual default in data class is also empty string.
+                )
+                transaction.set(docRef, newUser)
+                newUser
             }
-            .addOnFailureListener { e ->
-                e.printStackTrace()
-            }
+        }.addOnSuccessListener { user ->
+            onReady(user)
+        }.addOnFailureListener { e ->
+            e.printStackTrace()
+        }
     }
 
     fun validateUsername(username: String): String? {
